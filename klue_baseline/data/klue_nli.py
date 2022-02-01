@@ -12,6 +12,8 @@ from transformers import PreTrainedTokenizer
 from klue_baseline.data.base import DataProcessor, InputExample, InputFeatures, KlueDataModule
 from klue_baseline.data.utils import convert_examples_to_features
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 
 
@@ -80,6 +82,16 @@ class KlueNLIProcessor(DataProcessor):
             guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
             examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
         
+        # 모델은 그대로 영어 데이터셋만 추가해보기
+        if dataset_type == 'train':# 학습데이터 셋에만 영어 데이터 추가
+            df = pd.read_csv('/home/dasomoh88/sequence_classification/data/MNLI/train.tsv', sep='\t')
+            for i in range(df.shape[0]):
+                data = df.iloc[i]
+                guid, pre, hyp, label = data["pairID"], data["sentence1"], data["sentence2"], data["gold_label"]
+                examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
+
+
+
         return examples
 
     def _convert_features(self, examples: List[InputExample]) -> List[InputFeatures]:
