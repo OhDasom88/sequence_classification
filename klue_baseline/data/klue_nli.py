@@ -79,6 +79,7 @@ class KlueNLIProcessor(DataProcessor):
         for data in data_lst:
             guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
             examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
+        
         return examples
 
     def _convert_features(self, examples: List[InputExample]) -> List[InputFeatures]:

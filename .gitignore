@@ -134,3 +134,4 @@ data/dacon/**
 data/klue/**
 data/MNLI/**
 output/**
+*.tar.gz
