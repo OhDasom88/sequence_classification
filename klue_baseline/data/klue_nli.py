@@ -13,6 +13,8 @@ from klue_baseline.data.base import DataProcessor, InputExample, InputFeatures, 
 from klue_baseline.data.utils import convert_examples_to_features
 
 import pandas as pd
+import pathlib
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -75,23 +77,23 @@ class KlueNLIProcessor(DataProcessor):
 
     def _create_examples(self, file_path: str, dataset_type: str) -> List[InputExample]:
         examples = []
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(f'{str(pathlib.Path().resolve())}' + '/data' + file_path, "r", encoding="utf-8") as f:
             data_lst = json.load(f)
 
-        for data in data_lst:
+        for data in tqdm(data_lst):
             guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
             examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
         
+        
         # 모델은 그대로 영어 데이터셋만 추가해보기
         if dataset_type == 'train':# 학습데이터 셋에만 영어 데이터 추가
-            df = pd.read_csv('/home/dasomoh88/sequence_classification/data/MNLI/train.tsv', sep='\t')
-            for i in range(df.shape[0]):
-                data = df.iloc[i]
-                guid, pre, hyp, label = data["pairID"], data["sentence1"], data["sentence2"], data["gold_label"]
-                examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
-
-
-
+            # df = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/train.tsv', sep='\t', on_bad_lines='skip')
+            df1 = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/dev_matched.tsv', sep='\t', on_bad_lines='skip')
+            df2 = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/dev_mismatched.tsv', sep='\t', on_bad_lines='skip')
+            df = pd.concat([df1, df2])
+            df.dropna(inplace=True)
+            for data in tqdm(df.itertuples()):
+                examples.append(InputExample(guid=data.pairID, text_a=data.sentence1, text_b=data.sentence2, label=data.gold_label))
         return examples
 
     def _convert_features(self, examples: List[InputExample]) -> List[InputFeatures]:

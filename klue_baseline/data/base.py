@@ -146,7 +146,8 @@ class KlueDataModule(pl.LightningDataModule):
     @staticmethod
     def add_specific_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse.ArgumentParser:
         # parser.add_argument("--data_dir", default=None, type=str, help="The input data dir", required=True)
-        parser.add_argument("--data_dir", default='data/klue', type=str, help="The input data dir")
+        # parser.add_argument("--data_dir", default='data/klue', type=str, help="The input data dir")
+        parser.add_argument("--data_dir", default='/klue', type=str, help="The input data dir")
         parser.add_argument(
             "--train_file_name",
             default=None,
