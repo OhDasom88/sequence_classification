@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# 20220201
+data/dacon/**
+data/klue/**
+data/MNLI/**
+output/**
