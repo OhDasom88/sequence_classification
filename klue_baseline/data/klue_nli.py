@@ -15,6 +15,7 @@ from klue_baseline.data.utils import convert_examples_to_features
 import pandas as pd
 import pathlib
 from tqdm import tqdm
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -63,21 +64,22 @@ class KlueNLIProcessor(DataProcessor):
         examples = self._create_examples(file_path, dataset_type)
         features = self._convert_features(examples)
 
-        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-        all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
+        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)# torch.Size([24998, 128])
+        all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)# torch.Size([24998, 128])
         # Some model does not make use of token type ids (e.g. RoBERTa)
         all_token_type_ids = torch.tensor(
             [0 if f.token_type_ids is None else f.token_type_ids for f in features], dtype=torch.long
-        )
-        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
+        )#torch.Size([24998, 128])# t5-3b로 할때는 token_type를 반환하지 않음
+        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)# torch.Size([24998])
 
-        dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
-        dataset.examples = examples
-        return dataset
+        dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)# len(dataset.tensors)4
+        dataset.examples = examples# examples 속성 추가
+        return dataset# [ i.shape for i in dataset.tensors] > [torch.Size([24998, 128]), torch.Size([24998, 128]), torch.Size([24998, 128]), torch.Size([24998])]
 
     def _create_examples(self, file_path: str, dataset_type: str) -> List[InputExample]:
         examples = []
-        with open(f'{str(pathlib.Path().resolve())}' + '/data' + file_path, "r", encoding="utf-8") as f:
+        train_path = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
+        with open(f'{train_path}/data' + file_path, "r", encoding="utf-8") as f:
             data_lst = json.load(f)
 
         for data in tqdm(data_lst):
@@ -85,15 +87,16 @@ class KlueNLIProcessor(DataProcessor):
             examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
         
         
-        # 모델은 그대로 영어 데이터셋만 추가해보기
-        if dataset_type == 'train':# 학습데이터 셋에만 영어 데이터 추가
-            # df = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/train.tsv', sep='\t', on_bad_lines='skip')
-            df1 = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/dev_matched.tsv', sep='\t', on_bad_lines='skip')
-            df2 = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/dev_mismatched.tsv', sep='\t', on_bad_lines='skip')
-            df = pd.concat([df1, df2])
-            df.dropna(inplace=True)
-            for data in tqdm(df.itertuples()):
-                examples.append(InputExample(guid=data.pairID, text_a=data.sentence1, text_b=data.sentence2, label=data.gold_label))
+        # if dataset_type == 'train':# 학습데이터 셋에만 영어 데이터 추가
+        #     # df = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/train.tsv', sep='\t', on_bad_lines='skip')
+        #     # df1 = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/dev_matched.tsv', sep='\t', on_bad_lines='skip')
+        #     # df2 = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/dev_mismatched.tsv', sep='\t', on_bad_lines='skip')
+        #     # df = pd.concat([df1, df2])
+        #     # df = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/KorNLI/snli_1.0_train.ko.tsv', sep='\t', on_bad_lines='skip')
+        #     df = pd.read_csv(f'{train_path}/data/KorNLI/multinli.train.ko.tsv', sep='\t', on_bad_lines='skip')
+        #     df.dropna(inplace=True)
+        #     for i, data in tqdm(enumerate(df.itertuples())):
+        #         examples.append(InputExample(guid=i, text_a=data.sentence1, text_b=data.sentence2, label=data.gold_label))
         return examples
 
     def _convert_features(self, examples: List[InputExample]) -> List[InputFeatures]:

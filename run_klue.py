@@ -38,7 +38,8 @@ def add_general_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse
     )
     parser.add_argument(
         "--gpus",
-        default=None,
+        default=None,# 20220202
+        # default=0,
         nargs="+",
         type=int,
         help="Select specific GPU allocated for this, it is by default [] meaning none",

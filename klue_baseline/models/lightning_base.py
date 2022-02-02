@@ -8,7 +8,7 @@ import pkg_resources
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from transformers import AdamW, AutoConfig, AutoTokenizer, PretrainedConfig, PreTrainedTokenizer
+from transformers import AdamW, AutoConfig, AutoTokenizer, PretrainedConfig, PreTrainedTokenizer, T5ForConditionalGeneration
 from transformers.optimization import (
     Adafactor,
     get_cosine_schedule_with_warmup,
@@ -212,8 +212,11 @@ class BaseTransformer(pl.LightningModule):
         parser.add_argument(
             "--model_name_or_path",
             # default=None,#20220131
-            # default='klue/roberta-small',#20220131
-            default='/home/dasomoh88/KLUE-Baseline/klue_output/klue-nli/version_0/transformers/',#20220131
+            # default='klue/roberta-large',#20220131
+            # default='t5-3b',# AutoTokenizer
+            # default='microsoft/deberta-base',
+            default='roberta-base',# CPU 가 안됨
+            # default='/home/dasomoh88/KLUE-Baseline/klue_output/klue-nli/version_0/transformers/',#20220131
             type=str,
             # required=True,#20220131
             help="Path to pretrained model or model identifier from huggingface.co/models",

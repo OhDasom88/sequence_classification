@@ -64,7 +64,7 @@ class InputFeatures:
 
     input_ids: List[int]
     attention_mask: Optional[List[int]] = None
-    token_type_ids: Optional[List[int]] = None
+    token_type_ids: Optional[List[int]] = None# robert에서는 사용 5-3b로 할때는 token_type를 반환하지 않음
     label: Optional[Union[int, float]] = None
 
     def to_json_string(self) -> None:

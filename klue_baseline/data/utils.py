@@ -21,9 +21,9 @@ import transformers
 from transformers import PreTrainedTokenizer
 
 from klue_baseline.data.base import InputExample, InputFeatures
+import numpy as np
 
 logger = logging.getLogger(__name__)
-
 
 def convert_examples_to_features(
     examples: List[InputExample],
@@ -65,18 +65,18 @@ def convert_examples_to_features(
         #     return token_label
         raise KeyError(task_mode)
 
-    labels = [label_from_example(example) for example in examples]
+    labels = [label_from_example(example) for example in examples]# len(labels)  = len(examples)
 
     batch_encoding = tokenizer(
-        [(example.text_a, example.text_b) for example in examples],
+        [(example.text_a, example.text_b) for example in examples],# Premise, Hypothesis
         max_length=max_length,
         padding="max_length",
         truncation=True,
-    )
+    )# input_ids: (len(examples), 128), token_type_ids: (len(examples), 128), attention_mask: (len(examples), 128)
 
     features = []
     for i in range(len(examples)):
-        inputs = {k: batch_encoding[k][i] for k in batch_encoding}
+        inputs = {k: batch_encoding[k][i] for k in batch_encoding}# k in ['input_ids', 'token_type_ids', 'attention_mask']
 
         feature = InputFeatures(**inputs, label=labels[i])
         features.append(feature)

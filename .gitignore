@@ -133,5 +133,7 @@ dmypy.json
 data/dacon/**
 data/klue/**
 data/MNLI/**
+data/KorNLI/**
+data/KorSTS/**
 output/**
 *.tar.gz
