@@ -3,14 +3,17 @@ import logging
 import os
 import sys
 from pathlib import Path
+from tkinter import W
 from typing import List, Optional, Dict, Any
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.loggers import CSVLogger, WandbLogger
 
 from klue_baseline import KLUE_TASKS
 from klue_baseline.utils import Command, LoggingCallback
+import wandb
+wandb.init(config={})
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -93,8 +96,9 @@ def make_klue_trainer(
     pl.seed_everything(args.seed)
 
     # Logging
-    csv_logger = CSVLogger(args.output_dir, name=args.task)
-    args.output_dir = csv_logger.log_dir
+    # csv_logger = CSVLogger(args.output_dir, name=args.task)
+    # args.output_dir = csv_logger.log_dir
+    csv_logger = WandbLogger(save_dir=args.output_dir, name=args.task)
 
     if logging_callback is None:
         logging_callback = LoggingCallback()
@@ -177,10 +181,14 @@ def main() -> None:
     parser = task.processor_type.add_specific_args(parser, os.getcwd())
     parser = task.model_type.add_specific_args(parser, os.getcwd())
     args = parser.parse_args()
+    wandb.config.update(args) # adds all of the arguments as config variables
+
     log_args(args)
 
     trainer = make_klue_trainer(args)
     task.setup(args, command)
+    
+    wandb.watch(task.model)    
 
     if command == Command.Train:
         logger.info("Start to run the full optimization routine.")
