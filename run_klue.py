@@ -238,7 +238,9 @@ def main() -> None:
         "metric": {"name": "valid/loss", "goal": "minimize"},
         "method": "grid",
         # "method": "bayes",
-        "parameters": {}
+        "parameters": {},
+        'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
+
     }
     if args.model_name_or_path in ['klue/roberta-small']:
         sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
