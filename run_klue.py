@@ -13,7 +13,7 @@ from pytorch_lightning.loggers import CSVLogger, WandbLogger
 from klue_baseline import KLUE_TASKS
 from klue_baseline.utils import Command, LoggingCallback
 import wandb
-wandb.init(config={})
+
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -98,7 +98,7 @@ def make_klue_trainer(
     # Logging
     # csv_logger = CSVLogger(args.output_dir, name=args.task)
     # args.output_dir = csv_logger.log_dir
-    csv_logger = WandbLogger(save_dir=args.output_dir, name=args.task)
+    wandb_logger = WandbLogger(save_dir=args.output_dir, name=args.task)
 
     if logging_callback is None:
         logging_callback = LoggingCallback()
@@ -135,7 +135,8 @@ def make_klue_trainer(
         args,
         weights_summary=None,
         callbacks=[logging_callback] + extra_callbacks,
-        logger=csv_logger,
+        # logger=csv_logger,
+        logger=wandb_logger,
         checkpoint_callback=checkpoint_callback,
         **train_params,
     )
@@ -149,6 +150,39 @@ def log_args(args: argparse.Namespace) -> None:
     for key, value in args_dict.items():
         logger.info(fmt_string, key, value)
 
+def my_train_func():
+    wandb.init()
+    args = wandb.config
+    task = KLUE_TASKS.get(wandb.config.get('task'), None)
+    command = wandb.config.get('command')
+
+
+    # log_args(args)
+    trainer = make_klue_trainer(args)
+    task.setup(args, command)
+    
+    wandb.watch(task.model, criterion=None, log="all", log_freq=1000, idx=None, log_graph=(False))    
+
+    if command == Command.Train:
+        logger.info("Start to run the full optimization routine.")
+        trainer.fit(**task.to_dict())
+
+        # load the best checkpoint automatically
+        trainer.get_model().eval_dataset_type = "valid"
+        val_results = trainer.test(test_dataloaders=task.val_loader, verbose=False)[0]
+        print("-" * 80)
+
+        output_val_results_file = os.path.join(args.output_dir, "val_results.txt")
+        with open(output_val_results_file, "w") as writer:
+            for k, v in val_results.items():
+                writer.write(f"{k} = {v}\n")
+                print(f" - {k} : {v}")
+        print("-" * 80)
+
+    elif command == Command.Evaluate:
+        trainer.test(task.model, test_dataloaders=task.val_loader)
+    elif command == Command.Test:
+        trainer.test(task.model, test_dataloaders=task.test_loader)
 
 def main() -> None:
     # command = sys.argv[1].lower()
@@ -181,35 +215,34 @@ def main() -> None:
     parser = task.processor_type.add_specific_args(parser, os.getcwd())
     parser = task.model_type.add_specific_args(parser, os.getcwd())
     args = parser.parse_args()
-    wandb.config.update(args) # adds all of the arguments as config variables
 
-    log_args(args)
 
-    trainer = make_klue_trainer(args)
-    task.setup(args, command)
+    sweep_configuration = {
+        "name": "my-awesome-sweep",
+        "metric": {"name": "accuracy", "goal": "maximize"},
+        "method": "grid",
+        "parameters": {
+            "a": {
+                "values": [1, 2, 3, 4]
+            }
+        }
+    }
+    sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
+    # sweep_configuration['parameters'].update({'encoder_layerdrop':{'values':[0.1, 0.5]}})# roberta는 속성 없음
+    # sweep_configuration['parameters'].update({'decoder_layerdrop':{'values':[0.1, 0.5]}})
+    # sweep_configuration['parameters'].update({'dropout':{'values':[0.1, 0.5]}})
+    # sweep_configuration['parameters'].update({'attention_dropout':{'values':[0.1, 0.5]}})
+    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1, 0.5]}})
+    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1, 0.5]}})
+    sweep_configuration['parameters'].update({'hidden_act':{'values':[False]}})
+
+    # wandb.config.update(args) # adds all of the arguments as config variables
+    sweep_id = wandb.sweep(sweep_configuration)
+
+    # run the sweep
+    wandb.agent(sweep_id, function=my_train_func)
     
-    wandb.watch(task.model)    
 
-    if command == Command.Train:
-        logger.info("Start to run the full optimization routine.")
-        trainer.fit(**task.to_dict())
-
-        # load the best checkpoint automatically
-        trainer.get_model().eval_dataset_type = "valid"
-        val_results = trainer.test(test_dataloaders=task.val_loader, verbose=False)[0]
-        print("-" * 80)
-
-        output_val_results_file = os.path.join(args.output_dir, "val_results.txt")
-        with open(output_val_results_file, "w") as writer:
-            for k, v in val_results.items():
-                writer.write(f"{k} = {v}\n")
-                print(f" - {k} : {v}")
-        print("-" * 80)
-
-    elif command == Command.Evaluate:
-        trainer.test(task.model, test_dataloaders=task.val_loader)
-    elif command == Command.Test:
-        trainer.test(task.model, test_dataloaders=task.test_loader)
 
 
 if __name__ == "__main__":

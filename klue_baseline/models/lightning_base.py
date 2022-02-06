@@ -58,10 +58,14 @@ class BaseTransformer(pl.LightningModule):
     ) -> None:
         super().__init__()
 
-        data = getattr(hparams, "data", None)
-        if data is not None:
-            delattr(hparams, "data")
-        self.save_hyperparameters(hparams)
+        # data = getattr(hparams, "data", None)
+        # if data is not None:
+        #     delattr(hparams, "data")
+        # self.save_hyperparameters(hparams)
+
+        # wandb 적용 20220206
+        data = hparams.get('data')
+        self.save_hyperparameters(hparams._items)
         self.hparams.data = data
 
         self.step_count = 0
@@ -215,7 +219,8 @@ class BaseTransformer(pl.LightningModule):
             # default='klue/roberta-large',#20220131
             # default='t5-3b',# AutoTokenizer
             # default='microsoft/deberta-base',
-            default='roberta-base',# CPU 가 안됨
+            # default='roberta-base',# CPU 가 안됨
+            default='klue/roberta-small',# CPU 가 안됨
             # default='/home/dasomoh88/KLUE-Baseline/klue_output/klue-nli/version_0/transformers/',#20220131
             type=str,
             # required=True,#20220131
