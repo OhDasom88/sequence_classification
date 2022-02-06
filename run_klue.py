@@ -143,6 +143,7 @@ def make_klue_trainer(
     train_params["callbacks"] = [logging_callback] + extra_callbacks
     train_params["logger"] = wandb_logger
     train_params["checkpoint_callback"] = checkpoint_callback
+    train_params["progress_bar_refresh_rate"] = 20
 
     # return pl.Trainer.from_argparse_args(
     #     args,
@@ -232,17 +233,25 @@ def main() -> None:
 
 
     sweep_configuration = {
-        "name": "my-awesome-sweep",
-        "metric": {"name": "accuracy", "goal": "maximize"},
-        "method": "grid",
+        "name": f"{args.model_name_or_path}",
+        # "metric": {"name": "valid/accuracy", "goal": "maximize"},
+        "metric": {"name": "valid/loss", "goal": "minimize"},
+        # "method": "grid",
+        "method": "bayes",
         "parameters": {
             "a": {
                 "values": [1, 2, 3, 4]
             }
         }
     }
-    sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
-    # sweep_configuration['parameters'].update({'encoder_layerdrop':{'values':[0.1, 0.5]}})# roberta는 속성 없음
+    if args.model_name_or_path in ['klue/roberta-small']:
+        sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
+        sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+        sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+        sweep_configuration['parameters'].update({'hidden_act': {'values': ["gelu", "relu", "swish" , "gelu_new"]}})
+    else:
+        sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
+
     # sweep_configuration['parameters'].update({'decoder_layerdrop':{'values':[0.1, 0.5]}})
     # sweep_configuration['parameters'].update({'dropout':{'values':[0.1, 0.5]}})
     # sweep_configuration['parameters'].update({'attention_dropout':{'values':[0.1, 0.5]}})
