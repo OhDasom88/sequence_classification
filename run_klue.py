@@ -42,7 +42,7 @@ def add_general_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse
     parser.add_argument(
         "--gpus",
         default=None,# 20220202
-        # default=0,
+        # default=[0],
         nargs="+",
         type=int,
         help="Select specific GPU allocated for this, it is by default [] meaning none",
@@ -118,28 +118,42 @@ def make_klue_trainer(
     early_stopping_callback = EarlyStopping(monitor=metric_key, patience=args.patience, mode=args.early_stopping_mode)
     extra_callbacks.append(early_stopping_callback)
 
-    train_params: Dict[str, Any] = {}
+    # train_params: Dict[str, Any] = {}
+    # sweep config item 값을 hyper Parameter로 전달하기 위해 수정
+    train_params: Dict[str, Any] = pl.Trainer.default_attributes()
+    for k, v in train_params.items():
+        if args.get(k):
+            train_params[k] = args.get(k) 
+
     if args.fp16:
         train_params["precision"] = 16
 
     # Set GPU & Data Parallel
     args.num_gpus = 0 if args.gpus is None else len(args.gpus)
+    # if args.num_gpus > 1:
+    #     train_params["accelerator"] = "dp"
+    # Sweep 적용중
     if args.num_gpus > 1:
         train_params["accelerator"] = "dp"
     train_params["val_check_interval"] = 0.25  # check validation set 4 times during a training epoch
-    train_params["num_sanity_val_steps"] = args.num_sanity_val_steps
-    train_params["accumulate_grad_batches"] = args.accumulate_grad_batches
+    # train_params["num_sanity_val_steps"] = args.num_sanity_val_steps
+    # train_params["accumulate_grad_batches"] = args.accumulate_grad_batches
     train_params["profiler"] = extra_train_kwargs.get("profiler", None)
+    train_params["weights_summary"] = None
+    train_params["callbacks"] = [logging_callback] + extra_callbacks
+    train_params["logger"] = wandb_logger
+    train_params["checkpoint_callback"] = checkpoint_callback
 
-    return pl.Trainer.from_argparse_args(
-        args,
-        weights_summary=None,
-        callbacks=[logging_callback] + extra_callbacks,
-        # logger=csv_logger,
-        logger=wandb_logger,
-        checkpoint_callback=checkpoint_callback,
-        **train_params,
-    )
+    # return pl.Trainer.from_argparse_args(
+    #     args,
+    #     weights_summary=None,
+    #     callbacks=[logging_callback] + extra_callbacks,
+    #     # logger=csv_logger,
+    #     logger=wandb_logger,
+    #     checkpoint_callback=checkpoint_callback,
+    #     **train_params,
+    # )
+    return pl.Trainer(**train_params,)
 
 
 def log_args(args: argparse.Namespace) -> None:
@@ -232,9 +246,9 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'decoder_layerdrop':{'values':[0.1, 0.5]}})
     # sweep_configuration['parameters'].update({'dropout':{'values':[0.1, 0.5]}})
     # sweep_configuration['parameters'].update({'attention_dropout':{'values':[0.1, 0.5]}})
-    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1, 0.5]}})
-    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1, 0.5]}})
-    sweep_configuration['parameters'].update({'hidden_act':{'values':[False]}})
+    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1, 0.5]}})
+    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1, 0.5]}})
+    # sweep_configuration['parameters'].update({'hidden_act':{'values':[False]}})
 
     # wandb.config.update(args) # adds all of the arguments as config variables
     sweep_id = wandb.sweep(sweep_configuration)
