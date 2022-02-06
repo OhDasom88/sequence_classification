@@ -236,21 +236,22 @@ def main() -> None:
         "name": f"{args.model_name_or_path}",
         # "metric": {"name": "valid/accuracy", "goal": "maximize"},
         "metric": {"name": "valid/loss", "goal": "minimize"},
-        # "method": "grid",
-        "method": "bayes",
-        "parameters": {
-            "a": {
-                "values": [1, 2, 3, 4]
-            }
-        }
+        "method": "grid",
+        # "method": "bayes",
+        "parameters": {}
     }
     if args.model_name_or_path in ['klue/roberta-small']:
         sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
-        sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-        sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+        # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+        # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+        sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1, 0.5]}})
+        sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1, 0.5]}})
         sweep_configuration['parameters'].update({'hidden_act': {'values': ["gelu", "relu", "swish" , "gelu_new"]}})
     else:
         sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
+        sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1, 0.5]}})
+        sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1, 0.5]}})
+        sweep_configuration['parameters'].update({'hidden_act': {'values': ["gelu", "relu", "swish" , "gelu_new"]}})
 
     # sweep_configuration['parameters'].update({'decoder_layerdrop':{'values':[0.1, 0.5]}})
     # sweep_configuration['parameters'].update({'dropout':{'values':[0.1, 0.5]}})
