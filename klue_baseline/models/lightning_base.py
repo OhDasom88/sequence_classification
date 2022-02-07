@@ -82,6 +82,7 @@ class BaseTransformer(pl.LightningModule):
             )
         else:
             self.config: PretrainedConfig = config  # type: ignore[no-redef]
+        
 
         extra_model_params = ("encoder_layerdrop", "decoder_layerdrop", "dropout", "attention_dropout")
         for p in extra_model_params:
