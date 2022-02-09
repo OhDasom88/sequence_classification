@@ -244,39 +244,61 @@ def main() -> None:
 
     }
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
-    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.5,0.3,0.1]}})
-    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.5,0.3,0.1]}})
-    # sweep_configuration['parameters'].update({'classifier_dropout':{'values':[0.5,0.3,0.1]}})
-    # sweep_configuration['parameters'].update({'layer_norm_eps':{'values':[1e-12, 1e-05]}})
-    # sweep_configuration['parameters'].update({'weight_decay':{'values':[0.5,0.3,0.1]}})
-    sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
+
     sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    # sweep_configuration['parameters'].update({'hidden_act': {'values': ["gelu", "relu", "swish" , "gelu_new"]}})
-    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "relu", "swish" , "gelu_new"]}})
-    # sweep_configuration['parameters'].update({'fp16':{'values':[True, False]}})
     sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[True, False]}})
-    # sweep_configuration['parameters'].update({'adafactor':{'values':[True, False]}})
     sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
     sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
-    # sweep_configuration['parameters'].update({'train_batch_size':{'values':[args.train_batch_size/2, args.train_batch_size,args.train_batch_size*2]}})
-    # sweep_configuration['parameters'].update({'adam_epsilon':{'values':[args.adam_epsilon/2, args.adam_epsilon,args.adam_epsilon*2]}})
-    # sweep_configuration['parameters'].update({'learning_rate':{'values':[args.learning_rate/2, args.learning_rate, args.learning_rate*2]}})
-    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon/2*2}})
-    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate/2*2}})
-    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size/2*2}})
-    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size/2*2}})
+    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
+    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size*2}})
+    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length*2}})
     
-    # sweep_configuration['parameters'].update({'decoder_layerdrop':{'values':[0.1, 0.5]}})
-    # sweep_configuration['parameters'].update({'dropout':{'values':[0.1, 0.5]}})
-    # sweep_configuration['parameters'].update({'attention_dropout':{'values':[0.1, 0.5]}})
-    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1, 0.5]}})
-    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1, 0.5]}})
-    # sweep_configuration['parameters'].update({'hidden_act':{'values':[False]}})
-
+    # hidden_size (int, optional, defaults to 768)
+    #  — Dimensionality of the encoder layers and the pooler layer.
+    # !!! ValueError('The hidden size is a multiple of the number of attention heads (12)')
+    sweep_configuration['parameters'].update({'hidden_size':{'distribution': 'constant', 'value':768}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
+    # num_hidden_layers (int, optional, defaults to 12)
+    #  — Number of hidden layers in the Transformer encoder.
+    sweep_configuration['parameters'].update({'num_hidden_layers':{'distribution': 'constant', 'value':12}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
+    # num_attention_heads (int, optional, defaults to 12)
+    #  — Number of attention heads for each attention layer in the Transformer encoder.
+    sweep_configuration['parameters'].update({'num_attention_heads':{'distribution': 'categorical', 'values':[12]}})
+    # intermediate_size (int, optional, defaults to 3072)
+    #  — Dimensionality of the “intermediate” (often named feed-forward) layer in the Transformer encoder.
+    sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'categorical', 'values':[3072]}})
+    # hidden_act (str or Callable, optional, defaults to "gelu")
+    #  — The non-linear activation function (function or string) in the encoder and pooler. If string, "gelu", "relu", "silu" and "gelu_new" are supported.
+    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "relu", "swish" , "gelu_new"]}})
+    # hidden_dropout_prob (float, optional, defaults to 0.1)
+    #  — The dropout probability for all fully connected layers in the embeddings, encoder, and pooler.
+    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # attention_probs_dropout_prob (float, optional, defaults to 0.1) 
+    # — The dropout ratio for the attention probabilities.
+    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # max_position_embeddings (int, optional, defaults to 512) 
+    # — The maximum sequence length that this model might ever be used with. 
+    # Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
+    sweep_configuration['parameters'].update({'max_position_embeddings':{'distribution': 'constant', 'value':514}})
+    # type_vocab_size (int, optional, defaults to 2) 
+    # — The vocabulary size of the token_type_ids passed when calling BertModel or TFBertModel.
+    sweep_configuration['parameters'].update({'type_vocab_size':{'distribution': 'constant', 'value':1}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
+    # initializer_range (float, optional, defaults to 0.02)
+    #  — The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
+    sweep_configuration['parameters'].update({'initializer_range':{'distribution': 'categorical', 'values':[0.02, 0.03, 0.01]}})
+    # layer_norm_eps (float, optional, defaults to 1e-12) 
+    # — The epsilon used by the layer normalization layers.
+    sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
+    # position_embedding_type (str, optional, defaults to "absolute")
+    #  — Type of position embedding. Choose one of "absolute", "relative_key", "relative_key_query".
+    #  For positional embeddings use "absolute".
+    #  For more information on "relative_key", please refer to Self-Attention with Relative Position Representations (Shaw et al.).
+    #  For more information on "relative_key_query", please refer to Method 4 in Improve Transformer Models with Better Relative Position Embeddings (Huang et al.).
+    sweep_configuration['parameters'].update({'position_embedding_type':{'distribution': 'categorical', 'values':['absolute']}})
+    # classifier_dropout (float, optional) — The dropout ratio for the classification head.
+    sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    
     # wandb.config.update(args) # adds all of the arguments as config variables
     sweep_id = wandb.sweep(sweep_configuration)
 
