@@ -236,26 +236,39 @@ def main() -> None:
         "name": f"{args.model_name_or_path}",
         "metric": {"name": "valid/accuracy", "goal": "maximize"},
         # "metric": {"name": "valid/loss", "goal": "minimize"},
-        "method": "grid",
-        # "method": "bayes",
+        # "method": "grid",
+        "method": "bayes",
         "parameters": {},
-        'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
+        # 'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
+        "early_terminate": {"type": "hyperband", "min_iter": 6,},
 
     }
-    sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items()}
-    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.1,0.3, 0.5]}})
-    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.1,0.3, 0.5]}})
-    sweep_configuration['parameters'].update({'layer_norm_eps':{'values':[1e-05/2,1e-05,1e-05*2]}})
-    sweep_configuration['parameters'].update({'weight_decay':{'values':[0.0,0.3, 0.5]}})
-    sweep_configuration['parameters'].update({'hidden_act': {'values': ["gelu", "relu", "swish" , "gelu_new"]}})
-    sweep_configuration['parameters'].update({'fp16':{'values':[True, False]}})
-    sweep_configuration['parameters'].update({'train_batch_size':{'values':[args.train_batch_size/2, args.train_batch_size,args.train_batch_size*2]}})
-    sweep_configuration['parameters'].update({'max_seq_length':{'values':[args.max_seq_length/2,args.max_seq_length,args.max_seq_length*2]}})
-    sweep_configuration['parameters'].update({'adafactor':{'values':[True, False]}})
-    sweep_configuration['parameters'].update({'adam_epsilon':{'values':[args.adam_epsilon/2, args.adam_epsilon,args.adam_epsilon*2]}})
-    sweep_configuration['parameters'].update({'learning_rate':{'values':[args.learning_rate/2, args.learning_rate, args.learning_rate*2]}})
+    sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
+    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'values':[0.5,0.3,0.1]}})
+    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'values':[0.5,0.3,0.1]}})
+    # sweep_configuration['parameters'].update({'classifier_dropout':{'values':[0.5,0.3,0.1]}})
+    # sweep_configuration['parameters'].update({'layer_norm_eps':{'values':[1e-12, 1e-05]}})
+    # sweep_configuration['parameters'].update({'weight_decay':{'values':[0.5,0.3,0.1]}})
+    sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
+    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # sweep_configuration['parameters'].update({'hidden_act': {'values': ["gelu", "relu", "swish" , "gelu_new"]}})
+    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "relu", "swish" , "gelu_new"]}})
+    # sweep_configuration['parameters'].update({'fp16':{'values':[True, False]}})
+    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[True, False]}})
+    # sweep_configuration['parameters'].update({'adafactor':{'values':[True, False]}})
+    sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
+    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
+    # sweep_configuration['parameters'].update({'train_batch_size':{'values':[args.train_batch_size/2, args.train_batch_size,args.train_batch_size*2]}})
+    # sweep_configuration['parameters'].update({'adam_epsilon':{'values':[args.adam_epsilon/2, args.adam_epsilon,args.adam_epsilon*2]}})
+    # sweep_configuration['parameters'].update({'learning_rate':{'values':[args.learning_rate/2, args.learning_rate, args.learning_rate*2]}})
+    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon/2*2}})
+    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate/2*2}})
+    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size/2*2}})
+    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size/2*2}})
     
     # sweep_configuration['parameters'].update({'decoder_layerdrop':{'values':[0.1, 0.5]}})
     # sweep_configuration['parameters'].update({'dropout':{'values':[0.1, 0.5]}})

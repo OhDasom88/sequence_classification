@@ -90,6 +90,7 @@ class BaseTransformer(pl.LightningModule):
                 assert hasattr(self.config, p), f"model config doesn't have a `{p}` attribute"
                 setattr(self.config, p, getattr(self.hparams, p))
 
+
         if tokenizer is None:
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
@@ -97,6 +98,12 @@ class BaseTransformer(pl.LightningModule):
             )
         else:
             self.tokenizer = tokenizer
+
+        # model config도 tuning 대상인지 확인해보기
+        for k, v in self.config.to_dict().items():
+            if getattr(self.hparams, k, None):
+                setattr(self.config, k, getattr(self.hparams, k))
+
         self.model = model_type.from_pretrained(
             self.hparams.model_name_or_path,
             from_tf=bool(".ckpt" in self.hparams.model_name_or_path),
