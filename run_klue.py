@@ -281,10 +281,10 @@ def main() -> None:
     # max_position_embeddings (int, optional, defaults to 512) 
     # — The maximum sequence length that this model might ever be used with. 
     # Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
-    sweep_configuration['parameters'].update({'max_position_embeddings':{'distribution': 'constant', 'value':514}})
+    # sweep_configuration['parameters'].update({'max_position_embeddings':{'distribution': 'constant', 'value':514}})
     # type_vocab_size (int, optional, defaults to 2) 
     # — The vocabulary size of the token_type_ids passed when calling BertModel or TFBertModel.
-    sweep_configuration['parameters'].update({'type_vocab_size':{'distribution': 'constant', 'value':1}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
+    # sweep_configuration['parameters'].update({'type_vocab_size':{'distribution': 'constant', 'value':1}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # initializer_range (float, optional, defaults to 0.02)
     #  — The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
     sweep_configuration['parameters'].update({'initializer_range':{'distribution': 'categorical', 'values':[0.02, 0.03, 0.01]}})
