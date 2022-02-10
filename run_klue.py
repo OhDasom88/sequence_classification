@@ -14,6 +14,7 @@ from klue_baseline import KLUE_TASKS
 from klue_baseline.utils import Command, LoggingCallback
 import wandb
 
+from datetime import datetime as dt
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -233,7 +234,7 @@ def main() -> None:
 
 
     sweep_configuration = {
-        "name": f"{args.model_name_or_path}",
+        "name": f"{args.model_name_or_path}_{dt.now().strftime('%m%d_%H:%M')}",
         "metric": {"name": "valid/accuracy", "goal": "maximize"},
         # "metric": {"name": "valid/loss", "goal": "minimize"},
         # "method": "grid",
