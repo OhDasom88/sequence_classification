@@ -259,16 +259,16 @@ def main() -> None:
     # hidden_size (int, optional, defaults to 768)
     #  — Dimensionality of the encoder layers and the pooler layer.
     # !!! ValueError('The hidden size is a multiple of the number of attention heads (12)')
-    sweep_configuration['parameters'].update({'hidden_size':{'distribution': 'constant', 'value':768}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
+    # sweep_configuration['parameters'].update({'hidden_size':{'distribution': 'constant', 'value':768}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # num_hidden_layers (int, optional, defaults to 12)
     #  — Number of hidden layers in the Transformer encoder.
     sweep_configuration['parameters'].update({'num_hidden_layers':{'distribution': 'constant', 'value':12}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # num_attention_heads (int, optional, defaults to 12)
     #  — Number of attention heads for each attention layer in the Transformer encoder.
-    sweep_configuration['parameters'].update({'num_attention_heads':{'distribution': 'categorical', 'values':[12]}})
+    # sweep_configuration['parameters'].update({'num_attention_heads':{'distribution': 'categorical', 'values':[12]}})
     # intermediate_size (int, optional, defaults to 3072)
     #  — Dimensionality of the “intermediate” (often named feed-forward) layer in the Transformer encoder.
-    sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'categorical', 'values':[3072]}})
+    # sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'categorical', 'values':[3072]}})
     # hidden_act (str or Callable, optional, defaults to "gelu")
     #  — The non-linear activation function (function or string) in the encoder and pooler. If string, "gelu", "relu", "silu" and "gelu_new" are supported.
     sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
