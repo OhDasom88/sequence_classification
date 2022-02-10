@@ -144,8 +144,8 @@ def make_klue_trainer(
     train_params["callbacks"] = [logging_callback] + extra_callbacks
     train_params["logger"] = wandb_logger
     train_params["checkpoint_callback"] = checkpoint_callback
-    # train_params["progress_bar_refresh_rate"] = 20
-    train_params["progress_bar_refresh_rate"] = 1
+    train_params["progress_bar_refresh_rate"] = 20
+    # train_params["progress_bar_refresh_rate"] = 1
 
     # return pl.Trainer.from_argparse_args(
     #     args,
@@ -247,9 +247,14 @@ def main() -> None:
 
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
     if vars(args).get('model_name_or_path') is None:
-        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
+        # sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
+        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-small']}})
     else:
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
+
+    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#, False# GPU가 사용가능할때만
+    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#, False# GPU가 사용가능할때만
+    sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#, False# GPU가 사용가능할때만
 
     sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
     sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
@@ -258,9 +263,11 @@ def main() -> None:
     sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
     sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
     sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
-    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
-    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length*2}})
 
+    # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
+    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
+    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
+    
     # 일부 주석처리: 모델별로 값이 다르게 들어가야 해서 우선 pretrained 된 config 기본 값들이 학습시 전달되도록 수정
     # hidden_size (int, optional, defaults to 768)
     #  — Dimensionality of the encoder layers and the pooler layer.
