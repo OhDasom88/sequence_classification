@@ -223,12 +223,12 @@ class BaseTransformer(pl.LightningModule):
     def add_specific_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse.ArgumentParser:
         parser.add_argument(
             "--model_name_or_path",
-            # default=None,#20220131
+            default=None,#20220131
             # default='klue/roberta-large',#20220131
             # default='t5-3b',# AutoTokenizer
             # default='microsoft/deberta-base',
             # default='roberta-base',# CPU 가 안됨
-            default='klue/roberta-small',# CPU 가 안됨
+            # default='klue/roberta-small',# CPU 가 안됨
             # default='/home/dasomoh88/KLUE-Baseline/klue_output/klue-nli/version_0/transformers/',#20220131
             type=str,
             # required=True,#20220131

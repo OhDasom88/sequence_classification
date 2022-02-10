@@ -144,7 +144,8 @@ def make_klue_trainer(
     train_params["callbacks"] = [logging_callback] + extra_callbacks
     train_params["logger"] = wandb_logger
     train_params["checkpoint_callback"] = checkpoint_callback
-    train_params["progress_bar_refresh_rate"] = 20
+    # train_params["progress_bar_refresh_rate"] = 20
+    train_params["progress_bar_refresh_rate"] = 1
 
     # return pl.Trainer.from_argparse_args(
     #     args,
@@ -242,33 +243,38 @@ def main() -> None:
         "parameters": {},
         # 'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
         "early_terminate": {"type": "hyperband", "min_iter": 6,},
-
     }
-    sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
 
-    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[True]}})#, False
+    sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
+    if vars(args).get('model_name_or_path') is None:
+        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
+    else:
+        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
+
+    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
     sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
     sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
     sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
     sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
     sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
-    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size*2}})
+    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
     sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length*2}})
-    
+
+    # 일부 주석처리: 모델별로 값이 다르게 들어가야 해서 우선 pretrained 된 config 기본 값들이 학습시 전달되도록 수정
     # hidden_size (int, optional, defaults to 768)
     #  — Dimensionality of the encoder layers and the pooler layer.
     # !!! ValueError('The hidden size is a multiple of the number of attention heads (12)')
     # sweep_configuration['parameters'].update({'hidden_size':{'distribution': 'constant', 'value':768}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # num_hidden_layers (int, optional, defaults to 12)
     #  — Number of hidden layers in the Transformer encoder.
-    sweep_configuration['parameters'].update({'num_hidden_layers':{'distribution': 'constant', 'value':12}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
+    # sweep_configuration['parameters'].update({'num_hidden_layers':{'distribution': 'constant', 'value':12}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # num_attention_heads (int, optional, defaults to 12)
     #  — Number of attention heads for each attention layer in the Transformer encoder.
-    # sweep_configuration['parameters'].update({'num_attention_heads':{'distribution': 'categorical', 'values':[12]}})
+    # sweep_configuration['parameters'].update({'num_attention_heads':{'distribution': 'constant', 'value':12}})
     # intermediate_size (int, optional, defaults to 3072)
     #  — Dimensionality of the “intermediate” (often named feed-forward) layer in the Transformer encoder.
-    # sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'categorical', 'values':[3072]}})
+    # sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'constant', 'value':3072}})
     # hidden_act (str or Callable, optional, defaults to "gelu")
     #  — The non-linear activation function (function or string) in the encoder and pooler. If string, "gelu", "relu", "silu" and "gelu_new" are supported.
     sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
@@ -296,7 +302,7 @@ def main() -> None:
     #  For positional embeddings use "absolute".
     #  For more information on "relative_key", please refer to Self-Attention with Relative Position Representations (Shaw et al.).
     #  For more information on "relative_key_query", please refer to Method 4 in Improve Transformer Models with Better Relative Position Embeddings (Huang et al.).
-    sweep_configuration['parameters'].update({'position_embedding_type':{'distribution': 'categorical', 'values':['absolute']}})
+    # sweep_configuration['parameters'].update({'position_embedding_type':{'distribution': 'categorical', 'values':['absolute']}})
     # classifier_dropout (float, optional) — The dropout ratio for the classification head.
     sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     
