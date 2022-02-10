@@ -245,12 +245,12 @@ def main() -> None:
     }
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
 
-    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[True, False]}})
+    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[True]}})#, False
     sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
-    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
     sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
+    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
+    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
     sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
     sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size*2}})
     sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length*2}})
@@ -270,10 +270,10 @@ def main() -> None:
     sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'categorical', 'values':[3072]}})
     # hidden_act (str or Callable, optional, defaults to "gelu")
     #  — The non-linear activation function (function or string) in the encoder and pooler. If string, "gelu", "relu", "silu" and "gelu_new" are supported.
-    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "relu", "swish" , "gelu_new"]}})
+    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
     # hidden_dropout_prob (float, optional, defaults to 0.1)
     #  — The dropout probability for all fully connected layers in the embeddings, encoder, and pooler.
-    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.3}})
     # attention_probs_dropout_prob (float, optional, defaults to 0.1) 
     # — The dropout ratio for the attention probabilities.
     sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
