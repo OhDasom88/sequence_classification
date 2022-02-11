@@ -136,4 +136,5 @@ data/MNLI/**
 data/KorNLI/**
 data/KorSTS/**
 output/**
+wandb/**
 *.tar.gz

@@ -58,10 +58,14 @@ class BaseTransformer(pl.LightningModule):
     ) -> None:
         super().__init__()
 
-        data = getattr(hparams, "data", None)
-        if data is not None:
-            delattr(hparams, "data")
-        self.save_hyperparameters(hparams)
+        # data = getattr(hparams, "data", None)
+        # if data is not None:
+        #     delattr(hparams, "data")
+        # self.save_hyperparameters(hparams)
+
+        # wandb 적용 20220206
+        data = hparams.get('data')
+        self.save_hyperparameters(hparams._items)
         self.hparams.data = data
 
         self.step_count = 0
@@ -78,12 +82,14 @@ class BaseTransformer(pl.LightningModule):
             )
         else:
             self.config: PretrainedConfig = config  # type: ignore[no-redef]
+        
 
         extra_model_params = ("encoder_layerdrop", "decoder_layerdrop", "dropout", "attention_dropout")
         for p in extra_model_params:
             if getattr(self.hparams, p, None):
                 assert hasattr(self.config, p), f"model config doesn't have a `{p}` attribute"
                 setattr(self.config, p, getattr(self.hparams, p))
+
 
         if tokenizer is None:
             self.tokenizer = AutoTokenizer.from_pretrained(
@@ -92,6 +98,12 @@ class BaseTransformer(pl.LightningModule):
             )
         else:
             self.tokenizer = tokenizer
+
+        # model config도 tuning 대상인지 확인해보기
+        for k, v in self.config.to_dict().items():
+            if getattr(self.hparams, k, None):
+                setattr(self.config, k, getattr(self.hparams, k))
+
         self.model = model_type.from_pretrained(
             self.hparams.model_name_or_path,
             from_tf=bool(".ckpt" in self.hparams.model_name_or_path),
@@ -211,11 +223,12 @@ class BaseTransformer(pl.LightningModule):
     def add_specific_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse.ArgumentParser:
         parser.add_argument(
             "--model_name_or_path",
-            # default=None,#20220131
+            default=None,#20220131
             # default='klue/roberta-large',#20220131
             # default='t5-3b',# AutoTokenizer
             # default='microsoft/deberta-base',
-            default='roberta-base',# CPU 가 안됨
+            # default='roberta-base',# CPU 가 안됨
+            # default='klue/roberta-small',# CPU 가 안됨
             # default='/home/dasomoh88/KLUE-Baseline/klue_output/klue-nli/version_0/transformers/',#20220131
             type=str,
             # required=True,#20220131
