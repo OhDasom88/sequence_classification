@@ -76,7 +76,7 @@ class BaseTransformer(pl.LightningModule):
         if config is None:
             self.config = AutoConfig.from_pretrained(
                 self.hparams.config_name if self.hparams.config_name else self.hparams.model_name_or_path,
-                **({"num_labels": num_labels} if num_labels is not None else {}),
+                # **({"num_labels": num_labels} if num_labels is not None else {}),# 20220215 추가
                 cache_dir=cache_dir,
                 **config_kwargs,
             )

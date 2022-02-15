@@ -266,7 +266,8 @@ def main() -> None:
 
     # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
     sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
-    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
+    # sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
+    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'categorical', 'values':[args.max_seq_length]}})
     
     # 일부 주석처리: 모델별로 값이 다르게 들어가야 해서 우선 pretrained 된 config 기본 값들이 학습시 전달되도록 수정
     # hidden_size (int, optional, defaults to 768)

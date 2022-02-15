@@ -16,7 +16,7 @@ import pandas as pd
 import pathlib
 from tqdm import tqdm
 import re
-from collections import defaultdict
+from collections import defaultdict, Counter
 from itertools import combinations_with_replacement
 logger = logging.getLogger(__name__)
 
@@ -59,8 +59,8 @@ class KlueNLIProcessor(DataProcessor):
 
     @overrides
     def get_labels(self) -> List[str]:
-        # return ["entailment", "contradiction", "neutral"]
-        return [''.join(sorted(i)) for i in combinations_with_replacement('nce', 5)]# 20220210
+        return ["entailment", "contradiction", "neutral"]
+        # return [''.join(sorted(i)) for i in combinations_with_replacement('nce', 5)]# 20220210
 
     def _create_dataset(self, file_path: str, dataset_type: str) -> TensorDataset:
         examples = self._create_examples(file_path, dataset_type)
@@ -86,9 +86,9 @@ class KlueNLIProcessor(DataProcessor):
 
         labels = defaultdict(int)# 새로운 레이블 정보
         for data in tqdm(data_lst):
-            # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
+            guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
             # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data['author'][0]+''.join(sorted([data[k][0] for k in ['label2','label3','label4','label5']]))
-            guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], ''.join(sorted([data[k][0] for k in ['author','label2','label3','label4','label5']]))# author를 따로 취급하기에는 일부 la
+            # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], ''.join(sorted([data[k][0] for k in ['author','label2','label3','label4','label5']]))# author를 따로 취급하기에는 일부 la
             labels[label]+= 1
             examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
         labels# 비대칭 분표
