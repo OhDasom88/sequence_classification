@@ -132,9 +132,11 @@ dmypy.json
 # 20220201
 data/dacon/**
 data/klue/**
+data/klue_dp/**
 data/MNLI/**
 data/KorNLI/**
 data/KorSTS/**
 output/**
+model/**
 wandb/**
 *.tar.gz
