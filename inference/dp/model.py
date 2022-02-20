@@ -1,3 +1,4 @@
+from email.policy import default
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,6 +7,7 @@ import utils
 from torch.nn.parameter import Parameter
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from transformers import AutoModel
+
 
 
 class AutoModelforKlueDp(nn.Module):
@@ -131,6 +133,9 @@ class AutoModelforKlueDp(nn.Module):
         out_arc = self.attention(arc_h, arc_c, mask_d=mask_d, mask_e=mask_e).squeeze(
             dim=1
         )
+
+        head_ids = torch.argmax(out_arc, dim=2)
+
         type_c = type_c[batch_index, head_ids.data.t()].transpose(0, 1).contiguous()
         out_type = self.bilinear(type_h, type_c)
 

@@ -136,6 +136,8 @@ data/klue_dp/**
 data/MNLI/**
 data/KorNLI/**
 data/KorSTS/**
+data/*.json
+inference/output/*.json
 output/**
 model/**
 wandb/**

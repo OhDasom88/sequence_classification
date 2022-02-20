@@ -96,6 +96,9 @@ class BaseTransformer(pl.LightningModule):
                 self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
                 cache_dir=cache_dir,
             )
+            # 20220220
+            special_tokens_dict = {'additional_special_tokens': ['[word]']}
+            num_added_toks = self.tokenizer.add_special_tokens(special_tokens_dict)
         else:
             self.tokenizer = tokenizer
 

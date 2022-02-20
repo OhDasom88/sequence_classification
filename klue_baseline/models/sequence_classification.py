@@ -26,13 +26,20 @@ class SCTransformer(BaseTransformer):
             hparams,
             num_labels=hparams.num_labels,
             mode=self.mode,
-            # model_type=AutoModelForSequenceClassification,
-            model_type=AutoModel,# 20220215
+            model_type=AutoModelForSequenceClassification,
+            # model_type=AutoModel,# 20220215
             metrics=metrics,
         )
 
-        self.dense1 = nn.Linear(768, 1)
-        self.dense2 = nn.Linear(128, hparams.num_labels)
+        # self.dense = nn.Linear(hparams.hidden_size, hparams.hidden_size)
+        # self.dropout = nn.Dropout(hparams.hidden_dropout_prob)
+        # self.out_proj = nn.Linear(hparams.hidden_size, hparams.num_labels)
+        self.dense = nn.Linear(self.model.config.hidden_size, self.model.config.hidden_size)
+        self.dropout = nn.Dropout(self.model.config.hidden_dropout_prob)
+        self.out_proj = nn.Linear(self.model.config.hidden_size, hparams.num_labels)
+
+        # self.dense1 = nn.Linear(768, 1)
+        # self.dense2 = nn.Linear(128, hparams.num_labels)
         self.criterion = nn.CrossEntropyLoss()
 
     @overrides
@@ -40,13 +47,16 @@ class SCTransformer(BaseTransformer):
         # return self.model(**inputs)
         # outputs = self.model(**inputs)# (tensor(1.0984), tensor([[ 0.0083,  0... 0.0256]]))
         # outputs[1].shape : torch.Size([64, 3])
-        outputs = self.model(**{k:v for k, v in inputs.items() if k not in ['labels']})
-        outputs1 = outputs[0]# torch.Size([64, 128, 768])
-        outputs2 = self.dense1(outputs1)# torch.Size([64, 128, 1])
-        outputs3 = torch.squeeze(outputs2)# torch.Size([64, 128])
-        outputs4 = self.dense2(outputs3)# torch.Size([64, 3])
-        loss = self.criterion(outputs4, inputs['labels'])
-        return loss, outputs4
+        outputs = self.model.base_model(**{k:v for k, v in inputs.items() if k not in ['labels']})
+        features = outputs[0]# torch.Size([64, 128, 768])
+        x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
+        x = self.dropout(x)
+        x = self.dense(x)
+        x = torch.tanh(x)
+        x = self.dropout(x)
+        x = self.out_proj(x)
+        loss = self.criterion(x, inputs['labels'])
+        return loss, x
  
     @overrides
     def training_step(self, batch: List[torch.Tensor], batch_idx: int) -> Dict[str, torch.Tensor]:

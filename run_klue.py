@@ -252,9 +252,11 @@ def main() -> None:
     else:
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
 
-    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#, False# GPU가 사용가능할때만
+    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# ['word'] token 
+    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# partial train data(2000) ['word'] token  
+    # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#
+    # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#
+    # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
 
     sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
     sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
@@ -265,7 +267,7 @@ def main() -> None:
     sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
 
     # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
-    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
+    # sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
     # sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
     sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'categorical', 'values':[args.max_seq_length]}})
     
@@ -285,13 +287,13 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'constant', 'value':3072}})
     # hidden_act (str or Callable, optional, defaults to "gelu")
     #  — The non-linear activation function (function or string) in the encoder and pooler. If string, "gelu", "relu", "silu" and "gelu_new" are supported.
-    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
+    # sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
     # hidden_dropout_prob (float, optional, defaults to 0.1)
     #  — The dropout probability for all fully connected layers in the embeddings, encoder, and pooler.
-    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.3}})
+    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.3}})
     # attention_probs_dropout_prob (float, optional, defaults to 0.1) 
     # — The dropout ratio for the attention probabilities.
-    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     # max_position_embeddings (int, optional, defaults to 512) 
     # — The maximum sequence length that this model might ever be used with. 
     # Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
@@ -301,10 +303,10 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'type_vocab_size':{'distribution': 'constant', 'value':1}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # initializer_range (float, optional, defaults to 0.02)
     #  — The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
-    sweep_configuration['parameters'].update({'initializer_range':{'distribution': 'categorical', 'values':[0.02, 0.03, 0.01]}})
+    # sweep_configuration['parameters'].update({'initializer_range':{'distribution': 'categorical', 'values':[0.02, 0.03, 0.01]}})
     # layer_norm_eps (float, optional, defaults to 1e-12) 
     # — The epsilon used by the layer normalization layers.
-    sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
+    # sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
     # position_embedding_type (str, optional, defaults to "absolute")
     #  — Type of position embedding. Choose one of "absolute", "relative_key", "relative_key_query".
     #  For positional embeddings use "absolute".
@@ -312,7 +314,7 @@ def main() -> None:
     #  For more information on "relative_key_query", please refer to Method 4 in Improve Transformer Models with Better Relative Position Embeddings (Huang et al.).
     # sweep_configuration['parameters'].update({'position_embedding_type':{'distribution': 'categorical', 'values':['absolute']}})
     # classifier_dropout (float, optional) — The dropout ratio for the classification head.
-    sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     
     # wandb.config.update(args) # adds all of the arguments as config variables
     sweep_id = wandb.sweep(sweep_configuration)

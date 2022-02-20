@@ -81,17 +81,23 @@ class KlueNLIProcessor(DataProcessor):
     def _create_examples(self, file_path: str, dataset_type: str) -> List[InputExample]:
         examples = []
         train_path = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
-        with open(f'{train_path}/data' + file_path, "r", encoding="utf-8") as f:
-            data_lst = json.load(f)
-
+        # with open(f'{train_path}/data' + file_path, "r", encoding="utf-8") as f:
+        #     data_lst = json.load(f)
+        df = pd.read_csv(train_path+'/data'+ file_path)# special token을 반영
+        if dataset_type == 'train':
+            df = df[:-2000]
+        else:
+            df = df[-2000:]
         labels = defaultdict(int)# 새로운 레이블 정보
-        for data in tqdm(data_lst):
-            guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
+        # for data in tqdm(data_lst):
+        for data in tqdm(df.itertuples()):
+            guid, pre, hyp, label = data.index, data[6], data[7], data.label
+            # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
             # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data['author'][0]+''.join(sorted([data[k][0] for k in ['label2','label3','label4','label5']]))
             # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], ''.join(sorted([data[k][0] for k in ['author','label2','label3','label4','label5']]))# author를 따로 취급하기에는 일부 la
             labels[label]+= 1
             examples.append(InputExample(guid=guid, text_a=pre, text_b=hyp, label=label))
-        labels# 비대칭 분표
+        labels# 비대칭 분포 확인
         
         # if dataset_type == 'train':# 학습데이터 셋에만 영어 데이터 추가
         #     # df = pd.read_csv(f'{str(pathlib.Path().resolve())}/data/MNLI/train.tsv', sep='\t', on_bad_lines='skip')
