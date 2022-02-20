@@ -17,6 +17,7 @@ from utils import flatten_prediction_and_labels, get_dp_labels, get_pos_labels
 from tqdm import tqdm
 from collections import defaultdict
 import json
+import re 
 
 # KLUE_DP_OUTPUT = "output.csv"  # the name of output file should be output.csv
 KLUE_DP_OUTPUT = "dp_output_klue_train.json"  # the name of output file should be output.csv
@@ -28,7 +29,7 @@ def load_model(model_dir, args):
     # tarpath = os.path.join(model_dir, model_name)
     # tar = tarfile.open(tarpath, "r:gz")
     # tar.extractall(path=model_dir)
-
+    
     config = AutoConfig.from_pretrained(os.path.join(model_dir, "config.json"))
     model = AutoModelforKlueDp(config, args)
     model.load_state_dict(torch.load(os.path.join(model_dir, "dp-model.bin"), map_location='cpu'))
@@ -217,28 +218,30 @@ def inference(data_dir, model_dir, output_dir, args):
             chunk_pred.append(tuple(chunk_custom))
     
     # write results to output_dir
-    with open(os.path.join(output_dir, KLUE_DP_OUTPUT), "w", encoding="utf8") as f:
+    with open(os.path.join(output_dir, args.test_filename.replace('.','_')+'.json'), "w", encoding="utf8") as f:
         json.dump([([(ht[0], dp_labels[ht[-1]]) for ht in zip(h,t)],c) for h,t,c in zip(head_pred, type_pred, chunk_pred)], f)
         # json.dump([(h, [dp_labels[ht[-1]] for ht in t],c) for h,t,c in zip(head_pred, type_pred, chunk_pred)], f)
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    defaultDir = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
     # Container environment
     parser.add_argument(
         # "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_EVAL", "/data")
-        "--data_dir", type=str, default='/home/dasomoh88/sequence_classification/data/klue_dp/klue-dp-v1.1'
+        # "--data_dir", type=str, default=f'{defaultDir}/data/klue_dp/klue-dp-v1.1'# DP data
+        "--data_dir", type=str, default=f'{defaultDir}/data/klue'# NLI data
     )
     parser.add_argument(
         # "--model_dir", type=str, default="./model"
-        "--model_dir", type=str, default="/home/dasomoh88/sequence_classification/model/dp_model"
+        "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         # default=os.environ.get("SM_OUTPUT_DATA_DIR", "/output"),
-        default='/home/dasomoh88/sequence_classification/inference/output/',
+        default=f'{defaultDir}/inference/output/',
     )
 
     # inference arguments
@@ -253,7 +256,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--test_filename",
         # default="klue-dp-v1.1_test.tsv",
-        default="klue-dp-v1.1_dev.tsv",
+        # default="klue-dp-v1.1_dev.tsv",
+        default="klue-nli-v1.1_dev.json",
         # default="klue-dp-v1.1_dev_sample_10.tsv",
         type=str,
         help="Name of the test file (default: klue-dp-v1.1_test.tsv)",

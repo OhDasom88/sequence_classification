@@ -11,6 +11,7 @@ from utils import (KlueDpInputExample, KlueDpInputFeatures, get_dp_labels,
 from tqdm import tqdm
 from konlpy.tag import Mecab
 import pandas as pd
+import re
 
 class KlueDpDataset:
     def __init__(self, args, tokenizer):
@@ -24,8 +25,9 @@ class KlueDpDataset:
         sent_id = -1
         examples = []
         # kluedata
+        # train_path = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
         # with open('/home/dasomoh88/sequence_classification/data/klue/klue-nli-v1.1_dev.json') as f:
-        with open('/home/dasomoh88/sequence_classification/data/klue/klue-nli-v1.1_train.json') as f:
+        with open(file_path) as f:
             data = json.load(f)
         for row in data:
             for col in ['premise', 'hypothesis']:
