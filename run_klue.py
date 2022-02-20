@@ -259,12 +259,16 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
 
     sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
-    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
-    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
+    sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[vars(args).get('adafactor'), not vars(args).get('adafactor')]}})# True, False
+    # sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon, 'max':args.adam_epsilon*2}})
+    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'categorical', 'values':[args.adam_epsilon, args.adam_epsilon*2]}})# 
+    # sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay, 0.1]}})# 
+    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio, args.warmup_ratio*2]}})# 
     sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
-    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    # sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.learning_rate, args.learning_rate*2]}})# 
 
     # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
     # sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
