@@ -116,6 +116,10 @@ def make_klue_trainer(
             save_top_k=1,
             mode="max",
         )
+    # Andrew Ng Proj >> Early Stopping
+    # what early stopping does is by stopping halfway you have only a mid-size rate w. 
+    # And so similar to L2 regularization by picking a neural network with smaller norm for your parameters w
+    # , hopefully your neural network is over fitting less.
     early_stopping_callback = EarlyStopping(monitor=metric_key, patience=args.patience, mode=args.early_stopping_mode)
     extra_callbacks.append(early_stopping_callback)
 
@@ -178,7 +182,8 @@ def my_train_func():
     trainer = make_klue_trainer(args)
     task.setup(args, command)
     
-    wandb.watch(task.model, criterion=None, log="all", log_freq=1000, idx=None, log_graph=(False))    
+    # wandb.watch(task.model, criterion=None, log="all", log_freq=1000, idx=None, log_graph=(False))    
+    wandb.watch(task.model, criterion=None, log="all", log_freq=300, idx=None, log_graph=(False))    
 
     if command == Command.Train:
         logger.info("Start to run the full optimization routine.")
@@ -261,21 +266,21 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
 
     sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[vars(args).get('adafactor')]}})# True, False
+    # sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[vars(args).get('adafactor')]}})# True, False
     # sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon, 'max':args.adam_epsilon*2}})
     sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'categorical', 'values':[args.adam_epsilon]}})# args.adam_epsilon, args.adam_epsilon*2 
-    # sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay]}})# args.weight_decay, 0.1
-    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
-    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio]}})# args.warmup_ratio, args.warmup_ratio*2 
-    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['linear']}})# 'cosine', 'cosine_w_restarts', 'linear', 'polynomial'
-    # sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
-    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.learning_rate]}})# args.learning_rate, args.learning_rate*2
+    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.2}})
+    # sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay]}})# args.weight_decay, 0.1
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
+    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio]}})# args.warmup_ratio, args.warmup_ratio*2 
+    # sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['linear']}})# 'cosine', 'cosine_w_restarts', 'linear', 'polynomial'
+    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.learning_rate]}})# args.learning_rate, args.learning_rate*2
 
     # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
     # sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
     # sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
-    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'categorical', 'values':[args.max_seq_length]}})
+    # sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'categorical', 'values':[args.max_seq_length]}})
     
     # 일부 주석처리: 모델별로 값이 다르게 들어가야 해서 우선 pretrained 된 config 기본 값들이 학습시 전달되도록 수정
     # hidden_size (int, optional, defaults to 768)
