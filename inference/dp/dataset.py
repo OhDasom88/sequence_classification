@@ -29,11 +29,11 @@ class KlueDpDataset:
         # with open('/home/dasomoh88/sequence_classification/data/klue/klue-nli-v1.1_dev.json') as f:
         with open(file_path) as f:
             data = json.load(f)
-        for row in data:
+        for row in tqdm(data):
             for col in ['premise', 'hypothesis']:
                 text = row[col]
+                sent_id += 1
                 for i, v in enumerate(text.split()):
-                    sent_id += 1
                     guid = f'{row["guid"]}_{col}'
                     examples.append(
                         KlueDpInputExample(

@@ -254,6 +254,7 @@ def main() -> None:
 
     sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# ['word'] token 
     sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# partial train data(2000) ['word'] token  
+    sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['dp_output_dacon_test.json']}})#
     # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#
     # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
