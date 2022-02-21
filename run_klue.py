@@ -143,7 +143,7 @@ def make_klue_trainer(
     train_params["weights_summary"] = None
     train_params["callbacks"] = [logging_callback] + extra_callbacks
     train_params["logger"] = wandb_logger
-    train_params["checkpoint_callback"] = checkpoint_callback
+    # train_params["checkpoint_callback"] = checkpoint_callback# 용량 20220221
     train_params["progress_bar_refresh_rate"] = 20
     # train_params["progress_bar_refresh_rate"] = 1
 
