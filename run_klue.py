@@ -252,9 +252,10 @@ def main() -> None:
     else:
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
 
-    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# ['word'] token 
-    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# partial train data(2000) ['word'] token  
-    sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['dp_output_dacon_test.json']}})#
+    # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# ['word'] token 
+    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_from_klue_new_with_dp.csv']}})# ['word'] token 
+    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})# partial train data(2000) ['word'] token  
+    # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['dp_output_dacon_test.json']}})#
     # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#
     # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
@@ -267,7 +268,7 @@ def main() -> None:
     sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay, 0.1]}})# 
     # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
     sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio, args.warmup_ratio*2]}})# 
-    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
+    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['linear']}})# 'cosine', 'cosine_w_restarts', 'linear', 'polynomial'
     # sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
     sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.learning_rate, args.learning_rate*2]}})# 
 
