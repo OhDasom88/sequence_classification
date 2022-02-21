@@ -127,9 +127,9 @@ def inference(data_dir, model_dir, output_dir, args):
                                     chunk_custom.add(tuple(chunk_based_on_phr))# 구문정보가 같은 연속적인 어절을 chunk 후보 목록에 추가
                                     chunk_based_on_phr.clear()
 
-                    if len(chunk_based_on_phr)>0:
-                        chunk_custom.add(tuple(chunk_based_on_phr))
-                        chunk_based_on_phr.clear()
+                            if len(chunk_based_on_phr)>0:
+                                chunk_custom.add(tuple(chunk_based_on_phr))
+                                chunk_based_on_phr.clear()
 
                     if len(func) <2:
                         tmpSet.clear()
@@ -231,7 +231,8 @@ if __name__ == "__main__":
     parser.add_argument(
         # "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_EVAL", "/data")
         # "--data_dir", type=str, default=f'{defaultDir}/data/klue_dp/klue-dp-v1.1'# DP data
-        "--data_dir", type=str, default=f'{defaultDir}/data/klue'# NLI data
+        # "--data_dir", type=str, default=f'{defaultDir}/data/klue'# NLI data
+        "--data_dir", type=str, default=f'{defaultDir}/data/dacon'# NLI data
     )
     parser.add_argument(
         # "--model_dir", type=str, default="./model"
@@ -257,7 +258,10 @@ if __name__ == "__main__":
         "--test_filename",
         # default="klue-dp-v1.1_test.tsv",
         # default="klue-dp-v1.1_dev.tsv",
-        default="klue-nli-v1.1_dev.json",
+        # default="klue-nli-v1.1_dev.json",
+        # default="klue-nli-v1.1_train.json",
+        default="test_data.csv",
+        # default="train_data.csv",
         # default="klue-dp-v1.1_dev_sample_10.tsv",
         type=str,
         help="Name of the test file (default: klue-dp-v1.1_test.tsv)",

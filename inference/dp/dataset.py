@@ -27,42 +27,43 @@ class KlueDpDataset:
         # kluedata
         # train_path = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
         # with open('/home/dasomoh88/sequence_classification/data/klue/klue-nli-v1.1_dev.json') as f:
-        with open(file_path) as f:
-            data = json.load(f)
-        for row in tqdm(data):
-            for col in ['premise', 'hypothesis']:
-                text = row[col]
-                sent_id += 1
-                for i, v in enumerate(text.split()):
-                    guid = f'{row["guid"]}_{col}'
-                    examples.append(
-                        KlueDpInputExample(
-                            guid=guid, text=text, sent_id=sent_id,
-                            token_id=i+1, token=v,
-                            pos= '+'.join([po if po in pos_labels else 'NA' for w, po in mecab.pos(v)])
-                            , head=0, dep='',# 사용 X
+        if '.json' in file_path: 
+            with open(file_path) as f:
+                data = json.load(f)
+            for row in tqdm(data):
+                for col in ['premise', 'hypothesis']:
+                    text = row[col]
+                    sent_id += 1
+                    for i, v in enumerate(text.split()):
+                        guid = f'{row["guid"]}_{col}'
+                        examples.append(
+                            KlueDpInputExample(
+                                guid=guid, text=text, sent_id=sent_id,
+                                token_id=i+1, token=v,
+                                pos= '+'.join([po if po in pos_labels else 'NA' for w, po in mecab.pos(v)])
+                                , head=0, dep='',# 사용 X
+                            )
                         )
-                    )
-
+        elif '.csv' in file_path:
         # dacon data
         # for name in ('train','test'):# test
         # for name in ('train',):
-        #     df = pd.read_csv(f'/home/dasomoh88/sequence_classification/data/dacon/{name}_data.csv')
-        #     for j, row in enumerate(df.itertuples()):
-        #         for col in [2,3]:#premise, hypothesis
-        #             sent_id += 1
-        #             text = row[col]
-        #             guid = f'{j}_{col}'
-        #             # 논문에서 어절단위로 나눔, 어절은 띄어쓰기로 대부분 구분가능(한글 위키)
-        #             for i, v in enumerate(text.split()):
-        #                 examples.append(
-        #                     KlueDpInputExample(
-        #                         guid=guid, text=text, sent_id=sent_id,
-        #                         token_id=i+1, token=v,
-        #                         pos= '+'.join([po if po in pos_labels else 'NA' for w, po in mecab.pos(v)])
-        #                         , head=0, dep='',# 사용 X
-        #                     )
-        #                 )
+            df = pd.read_csv(file_path)
+            for j, row in enumerate(df.itertuples()):
+                for col in [2,3]:#premise, hypothesis
+                    sent_id += 1
+                    text = row[col]
+                    guid = f'{j}_{col}'
+                    # 논문에서 어절단위로 나눔, 어절은 띄어쓰기로 대부분 구분가능(한글 위키)
+                    for i, v in enumerate(text.split()):
+                        examples.append(
+                            KlueDpInputExample(
+                                guid=guid, text=text, sent_id=sent_id,
+                                token_id=i+1, token=v,
+                                pos= '+'.join([po if po in pos_labels else 'NA' for w, po in mecab.pos(v)])
+                                , head=0, dep='',# 사용 X
+                            )
+                        )
 
 
         # with open(file_path, "r", encoding="utf-8") as f:
@@ -265,6 +266,7 @@ class KlueDpDataset:
         dep_ids = torch.tensor([f.dep_ids for f in features], dtype=torch.long)
         pos_ids = torch.tensor([f.pos_ids for f in features], dtype=torch.long)
 
+        print('input_ids.shape : '+ str(input_ids.shape))
         return TensorDataset(
             input_ids,
             attention_mask,
