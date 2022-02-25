@@ -73,7 +73,8 @@ def add_general_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse
     parser.add_argument("--metric_key", type=str, default="accuracy", help="The name of monitoring metric")
     parser.add_argument(
         "--patience",
-        default=5,
+        # default=5,
+        default=10,# 20220221
         type=int,
         help="The number of validation epochs with no improvement after which training will be stopped.",
     )
@@ -183,7 +184,7 @@ def my_train_func():
     task.setup(args, command)
     
     # wandb.watch(task.model, criterion=None, log="all", log_freq=1000, idx=None, log_graph=(False))    
-    wandb.watch(task.model, criterion=None, log="all", log_freq=300, idx=None, log_graph=(False))    
+    wandb.watch(task.model, criterion=None, log="all", log_freq=500, idx=None, log_graph=(False))    
 
     if command == Command.Train:
         logger.info("Start to run the full optimization routine.")
@@ -258,24 +259,35 @@ def main() -> None:
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
 
     # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# ['word'] token 
-    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_from_klue_new_with_dp.csv']}})# ['word'] token 
-    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})# partial train data(2000) ['word'] token  
-    # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['dp_output_dacon_test.json']}})#
+    # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_from_klue_new_with_dp.csv']}})# ['word'] token 
+    # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})# partial train data(2000) ['word'] token  
+    # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})#
+    sweep_configuration['parameters'].update(
+        {
+            'file_name':{
+                'distribution': 'categorical'
+                , 'values':[
+                    {'DP':True,'filenames':('train_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv')}
+                    , {'DP':False,'filenames':('klue-nli-v1_1_train.json','klue-nli-v1_1_test.json','klue-nli-v1_1_test.json')}
+                ]
+            }
+        }
+    )#
     # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#
     # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
 
     sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
     # sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[vars(args).get('adafactor')]}})# True, False
-    # sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon, 'max':args.adam_epsilon*2}})
+    # sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
     sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'categorical', 'values':[args.adam_epsilon]}})# args.adam_epsilon, args.adam_epsilon*2 
-    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.2}})
-    # sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay]}})# args.weight_decay, 0.1
-    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
-    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio]}})# args.warmup_ratio, args.warmup_ratio*2 
+    # sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.2}})
+    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay]}})# args.weight_decay, 0.1
+    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio]}})# args.warmup_ratio, args.warmup_ratio*2 
     # sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['linear']}})# 'cosine', 'cosine_w_restarts', 'linear', 'polynomial'
-    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
-    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.learning_rate]}})# args.learning_rate, args.learning_rate*2
+    # sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'categorical', 'values':[args.learning_rate]}})# args.learning_rate, args.learning_rate*2
 
     # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
     # sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})

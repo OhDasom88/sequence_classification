@@ -50,9 +50,12 @@ class KlueNLIProcessor(DataProcessor):
     def get_test_dataset(self, data_dir: str, file_name: Optional[str] = None) -> TensorDataset:
         file_path = os.path.join(data_dir, file_name or self.origin_test_file_name)
 
+        
         if not os.path.exists(file_path):
-            logger.info("Test dataset doesn't exists. So loading dev dataset instead.")
-            file_path = os.path.join(data_dir, self.hparams.dev_file_name or self.origin_dev_file_name)
+            train_path = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
+            if not os.path.exists(train_path+'/data' + file_path): 
+                logger.info("Test dataset doesn't exists. So loading dev dataset instead.")
+                file_path = os.path.join(data_dir, self.hparams.dev_file_name or self.origin_dev_file_name)
 
         logger.info(f"Loading from {file_path}")
         return self._create_dataset(file_path, "test")
@@ -82,11 +85,13 @@ class KlueNLIProcessor(DataProcessor):
         examples = []
         train_path = re.search(r'.+(?=sequence_classification)',__file__).group(0)+'sequence_classification'
         if '.csv' in file_path:
-            df = pd.read_csv(train_path+'/data'+ file_path)# special token을 반영
-            # if dataset_type == 'train':
-            #     df = df[:-2000]
-            # else:
-            #     df = df[-2000:]
+            if 'klue' in file_path:
+                df = pd.read_csv(train_path+'/data'+ file_path)# special token을 반영
+            else:
+                if dataset_type == 'train':# 균등하게 sampling
+                    df = df[:-3000]
+                else:
+                    df = df[-3000:]
         else:
             with open(f'{train_path}/data' + file_path, "r", encoding="utf-8") as f:
                 data_lst = json.load(f)
@@ -95,7 +100,9 @@ class KlueNLIProcessor(DataProcessor):
         labels = defaultdict(int)# 새로운 레이블 정보
         # for data in tqdm(data_lst):
         for data in tqdm(df.itertuples()):
-            guid, pre, hyp, label = data[2], data[12], data[13], data.gold_label
+            data = data._asdict()
+            guid, pre, hyp, label = data.get('guid'), data.get('premise'), data.get('hypothesis'), data.get('gold_label')
+            # guid, pre, hyp, label = data[2], data[12], data[13], data.gold_label
             # guid, pre, hyp, label = data.index, data[6], data[7], data.label
             # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]
             # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data['author'][0]+''.join(sorted([data[k][0] for k in ['label2','label3','label4','label5']]))

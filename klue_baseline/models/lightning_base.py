@@ -96,9 +96,11 @@ class BaseTransformer(pl.LightningModule):
                 self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
                 cache_dir=cache_dir,
             )
-            # 20220220
-            special_tokens_dict = {'additional_special_tokens': ['[word]']}
-            num_added_toks = self.tokenizer.add_special_tokens(special_tokens_dict)
+            if self.hparams.file_name.get('DP'):
+                # 20220220
+                special_tokens_dict = {'additional_special_tokens': ['[word]']}
+                num_added_toks = self.tokenizer.add_special_tokens(special_tokens_dict)
+                                
         else:
             self.tokenizer = tokenizer
 
@@ -288,6 +290,8 @@ class BaseTransformer(pl.LightningModule):
         parser.add_argument("--warmup_ratio", default=0.2, type=float, help="Linear warmup over warmup_step ratio.")
         # parser.add_argument("--num_train_epochs", dest="max_epochs", default=4, type=int)
         parser.add_argument("--num_train_epochs", dest="max_epochs", default=5, type=int)
-        parser.add_argument("--adafactor", action="store_true")
+        # Adafactor is a stochastic optimization method based on Adam 
+        # that reduces memory usage while retaining the empirical benefits of adaptivity.
+        parser.add_argument("--adafactor", action="store_true")#
         parser.add_argument("--verbose_step_count", default=100, type=int)
         return parser
