@@ -61,6 +61,10 @@ class SCTransformer(BaseTransformer):
         # outputs[1].shape : torch.Size([64, 3])
         outputs = self.model.base_model(**{k:v for k, v in inputs.items() if k not in ['labels']})
         features = outputs[0]# torch.Size([64, 128, 768])
+        
+        # for i, sent in enumerate(inputs['input_ids']):
+        #     for j, token in enumerate(sent):
+        #         features
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
         x = self.dropout(x)
         x = self.dense(x)

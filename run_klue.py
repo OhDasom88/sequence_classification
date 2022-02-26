@@ -248,13 +248,15 @@ def main() -> None:
         "method": "bayes",
         "parameters": {},
         # 'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
-        "early_terminate": {"type": "hyperband", "min_iter": 6,},
+        "early_terminate": {"type": "hyperband", "min_iter": 3,},
     }
 
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
     if vars(args).get('model_name_or_path') is None:
         # sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-small']}})
+        sweep_configuration.update({"name": f"{sweep_configuration['parameters']['model_name_or_path']}_{dt.now().strftime('%m%d_%H:%M')}",})
+
     else:
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
 
@@ -267,8 +269,8 @@ def main() -> None:
             'file_name':{
                 'distribution': 'categorical'
                 , 'values':[
-                    {'DP':True,'filenames':('train_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv')}
-                    , {'DP':False,'filenames':('klue-nli-v1_1_train.json','klue-nli-v1_1_test.json','klue-nli-v1_1_test.json')}
+                    {'DP':True,'filenames':('train_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv')},
+                    # {'DP':False,'filenames':('klue-nli-v1_1_train.json','klue-nli-v1_1_test.json','klue-nli-v1_1_test.json')},
                 ]
             }
         }
