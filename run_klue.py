@@ -114,8 +114,9 @@ def make_klue_trainer(
             dirpath=Path(args.output_dir).joinpath("checkpoint"),
             monitor=metric_key,
             filename="{epoch:02d}-{step}=" + filename_for_metric,
-            save_top_k=1,
-            mode="max",
+            save_top_k=2,
+            # mode="max",
+            mode="max" if metric_key == 'accuracy' else 'min',
         )
     # Andrew Ng Proj >> Early Stopping
     # what early stopping does is by stopping halfway you have only a mid-size rate w. 
@@ -242,16 +243,16 @@ def main() -> None:
 
     sweep_configuration = {
         "name": f"{args.model_name_or_path}_{dt.now().strftime('%m%d_%H:%M')}",
-        "metric": {"name": "valid/accuracy", "goal": "maximize"},
-        # "metric": {"name": "valid/loss", "goal": "minimize"},
+        # "metric": {"name": "valid/accuracy", "goal": "maximize"},
+        "metric": {"name": f"valid/{args.metric_key}", "goal": "minimize" if args.metric_key == 'loss' else 'maximize'},# args.metric_key
         # "method": "grid",
         "method": "bayes",
         "parameters": {},
         # 'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
         # "early_terminate": {"type": "hyperband", "min_iter": 3,},
     }
-
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
+
     if vars(args).get('model_name_or_path') is None:
         # sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-small']}})

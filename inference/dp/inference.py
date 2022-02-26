@@ -62,6 +62,8 @@ def inference(data_dir, model_dir, output_dir, args):
     head_pred = []
     type_pred = []
     chunk_pred = []
+    type_ref = []
+
     for i, batch in tqdm(enumerate(klue_dp_test_loader)):
         input_ids, masks, ids, max_word_length = batch
         input_ids = input_ids.to(device)
@@ -216,10 +218,11 @@ def inference(data_dir, model_dir, output_dir, args):
             head_pred.append(head_)
             type_pred.append(types[j][:len(head_)])
             chunk_pred.append(tuple(chunk_custom))
+            type_ref.append(out_type[j][:len(head_)])
     
     # write results to output_dir
     with open(os.path.join(output_dir, args.test_filename.replace('.','_')+'.json'), "w", encoding="utf8") as f:
-        json.dump([([(ht[0], dp_labels[ht[-1]]) for ht in zip(h,t)],c) for h,t,c in zip(head_pred, type_pred, chunk_pred)], f)
+        json.dump([([(ht[0], dp_labels[ht[-1]]) for ht in zip(h,t)],c,r) for h,t,c,r in zip(head_pred, type_pred, chunk_pred, type_ref)], f)
         # json.dump([(h, [dp_labels[ht[-1]] for ht in t],c) for h,t,c in zip(head_pred, type_pred, chunk_pred)], f)
 
 
@@ -244,8 +247,8 @@ if __name__ == "__main__":
         "--output_dir",
         type=str,
         # default=os.environ.get("SM_OUTPUT_DATA_DIR", "/output"),
-        # default=f'{defaultDir}/inference/output/',
-        default=f'/content/drive/MyDrive/output',
+        default=f'{defaultDir}/inference/output/',
+        default=f'  ',
     )
 
     # inference arguments
