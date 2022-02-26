@@ -61,10 +61,33 @@ class SCTransformer(BaseTransformer):
         # outputs[1].shape : torch.Size([64, 3])
         outputs = self.model.base_model(**{k:v for k, v in inputs.items() if k not in ['labels']})
         features = outputs[0]# torch.Size([64, 128, 768])
-        
-        # for i, sent in enumerate(inputs['input_ids']):
-        #     for j, token in enumerate(sent):
-        #         features
+
+        chunkVecBatch = []        
+        for i, sent in enumerate(inputs['input_ids']):
+            chunkVec = []        
+            chunkVecBatch.append(chunkVec)
+            chunkVecSent = []
+            chunkVec.append(chunkVecSent)
+            chunkVecSum = torch.zeros_like(features[0][0])
+            a=-1
+            for j, token_id in enumerate(sent):
+                if a != -1 and token_id in self.tokenizer.all_special_ids:
+                    chunkVecSent.append(chunkVecSum/(a+1))#각문장의 청크표현 벡터는 청크를 구성하는 토큰 백터의 평균으로 생성
+                    if token_id == 2: # SEP, 가설문장 시작
+                        if sent[j+1] == 1: continue# PAD
+                        chunkVecSent = []
+                        chunkVec.append(chunkVecSent)
+                    # initializing chunk information
+                    chunkVecSum=torch.zeros_like(features[0][0])
+                    a = -1
+                else:
+                    a += token_id not in self.tokenizer.all_special_ids# special token이 아닌것만 
+                    if a == -1: continue
+                    chunkVecSum+= features[i][j]#torch.Size([768])
+
+        # head, deprel 필요 + dep rel의 embedding
+
+
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
         x = self.dropout(x)
         x = self.dense(x)

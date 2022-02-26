@@ -232,17 +232,20 @@ if __name__ == "__main__":
         # "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_EVAL", "/data")
         # "--data_dir", type=str, default=f'{defaultDir}/data/klue_dp/klue-dp-v1.1'# DP data
         # "--data_dir", type=str, default=f'{defaultDir}/data/klue'# NLI data
+        # "--data_dir", type=str, default=f'{defaultDir}/data/dacon'# NLI data
         "--data_dir", type=str, default=f'{defaultDir}/data/dacon'# NLI data
     )
     parser.add_argument(
         # "--model_dir", type=str, default="./model"
-        "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
+        # "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
+        "--model_dir", type=str, default="/content/drive/MyDrive/model/dp"
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         # default=os.environ.get("SM_OUTPUT_DATA_DIR", "/output"),
-        default=f'{defaultDir}/inference/output/',
+        # default=f'{defaultDir}/inference/output/',
+        default=f'/content/drive/MyDrive/output',
     )
 
     # inference arguments
@@ -260,8 +263,8 @@ if __name__ == "__main__":
         # default="klue-dp-v1.1_dev.tsv",
         # default="klue-nli-v1.1_dev.json",
         # default="klue-nli-v1.1_train.json",
-        default="test_data.csv",
-        # default="train_data.csv",
+        # default="test_data.csv",
+        default="train_data.csv",
         # default="klue-dp-v1.1_dev_sample_10.tsv",
         type=str,
         help="Name of the test file (default: klue-dp-v1.1_test.tsv)",

@@ -101,7 +101,10 @@ class KlueNLIProcessor(DataProcessor):
         # for data in tqdm(data_lst):
         for data in tqdm(df.itertuples()):
             data = data._asdict()
-            guid, pre, hyp, label = data.get('guid'), data.get('premise'), data.get('hypothesis'), data.get('gold_label')
+            guid =  data.get('guid')
+            pre = data.get('_12' if self.hparams.file_name['DP'] else 'premise')
+            hyp = data.get('_13' if self.hparams.file_name['DP'] else 'hypothesis')
+            label = data.get('gold_label')
             # guid, pre, hyp, label = data[2], data[12], data[13], data.gold_label
             # guid, pre, hyp, label = data.index, data[6], data[7], data.label
             # guid, pre, hyp, label = data["guid"], data["premise"], data["hypothesis"], data["gold_label"]

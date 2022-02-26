@@ -13,8 +13,9 @@ from pytorch_lightning.loggers import CSVLogger, WandbLogger
 from klue_baseline import KLUE_TASKS
 from klue_baseline.utils import Command, LoggingCallback
 import wandb
-
 from datetime import datetime as dt
+import torch
+
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -42,8 +43,7 @@ def add_general_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse
     )
     parser.add_argument(
         "--gpus",
-        default=None,# 20220202
-        # default=[0],
+        default = [0] if torch.cuda.is_available() else None,
         nargs="+",
         type=int,
         help="Select specific GPU allocated for this, it is by default [] meaning none",
@@ -248,7 +248,7 @@ def main() -> None:
         "method": "bayes",
         "parameters": {},
         # 'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
-        "early_terminate": {"type": "hyperband", "min_iter": 3,},
+        # "early_terminate": {"type": "hyperband", "min_iter": 3,},
     }
 
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
@@ -264,6 +264,7 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_from_klue_new_with_dp.csv']}})# ['word'] token 
     # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})# partial train data(2000) ['word'] token  
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})#
+
     sweep_configuration['parameters'].update(
         {
             'file_name':{
@@ -278,8 +279,7 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#
     # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#
     # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
-
-    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
+    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[torch.cuda.is_available()]}})#, False# GPU가 사용가능할때만
     # sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[vars(args).get('adafactor')]}})# True, False
     # sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
     sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'categorical', 'values':[args.adam_epsilon]}})# args.adam_epsilon, args.adam_epsilon*2 
