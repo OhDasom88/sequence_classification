@@ -20,7 +20,7 @@ import json
 import re 
 
 # KLUE_DP_OUTPUT = "output.csv"  # the name of output file should be output.csv
-KLUE_DP_OUTPUT = "dp_output_klue_train.json"  # the name of output file should be output.csv
+# KLUE_DP_OUTPUT = "dp_output_klue_train.json"  # the name of output file should be output.csv
 
 
 def load_model(model_dir, args):
@@ -240,8 +240,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         # "--model_dir", type=str, default="./model"
-        "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
-        # "--model_dir", type=str, default="/content/drive/MyDrive/model/dp"
+        # "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
+        "--model_dir", type=str, default="/content/drive/MyDrive/model/dp"
     )
     parser.add_argument(
         "--output_dir",
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         # default="train_data.csv",
         # default="klue-dp-v1.1_dev_sample_10.tsv",
         # default="klue-nli-v1_1_train.json",
-        default="klue-nli-v1_1_test.json",
+        default="klue-nli-v1_1_test.json",#1
         # default="test_data.csv",
         type=str,
         help="Name of the test file (default: klue-dp-v1.1_test.tsv)",
