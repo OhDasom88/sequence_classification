@@ -1,5 +1,3 @@
-from re import A
-from numpy import append
 import pandas as pd
 import json
 from tqdm import tqdm
@@ -23,13 +21,14 @@ for name in ('test', 'train'):
     for i, row in tqdm(enumerate(dataOrigin)):
         newRow = []
         newCols.append(newRow)
+        newRow.append(data[sent_id][-1])# tag representaion
         # for col in [2,3]:#premise, hypothesis
         for col in ['premise','hypothesis']:#premise, hypothesis
             sent_id += 1
             sent = []
             word_id = 0
             words = row[col].split()
-            chnk_info = data[sent_id][-1]
+            chnk_info = data[sent_id][-2]
             
             while word_id < len(words):
                 chnk = []
@@ -49,5 +48,4 @@ for name in ('test', 'train'):
                     word_id+=1
             newRow.append(' [word] '.join(sent))
     # pd.concat([df, pd.DataFrame(newCols)], axis=1).to_csv(f'{defaultDir}/data/dacon/{name}_from_klue_new_with_dp.csv')
-    pd.concat([pd.DataFrame(dataOrigin), pd.DataFrame(newCols)], axis=1).to_csv(f'{defaultDir}/data/dacon/{name}_from_klue_new_with_dp.csv')
-
+    pd.concat([pd.DataFrame(dataOrigin), pd.DataFrame(newCols)], axis=1).to_csv(f'{defaultDir}/data/dacon/{name}_from_klue_new_with_dp_v2.csv')
