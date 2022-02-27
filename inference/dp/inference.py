@@ -218,7 +218,7 @@ def inference(data_dir, model_dir, output_dir, args):
             head_pred.append(head_)
             type_pred.append(types[j][:len(head_)])
             chunk_pred.append(tuple(chunk_custom))
-            type_ref.append(out_type[j][:len(head_)])
+            type_ref.append(out_type[j][:len(head_)].tolist())
     
     # write results to output_dir
     with open(os.path.join(output_dir, args.test_filename.replace('.','_')+'.json'), "w", encoding="utf8") as f:
@@ -240,15 +240,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         # "--model_dir", type=str, default="./model"
-        # "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
-        "--model_dir", type=str, default="/content/drive/MyDrive/model/dp"
+        "--model_dir", type=str, default=f"{defaultDir}/model/dp_model"
+        # "--model_dir", type=str, default="/content/drive/MyDrive/model/dp"
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         # default=os.environ.get("SM_OUTPUT_DATA_DIR", "/output"),
         default=f'{defaultDir}/inference/output/',
-        default=f'  ',
     )
 
     # inference arguments
@@ -264,11 +263,11 @@ if __name__ == "__main__":
         "--test_filename",
         # default="klue-dp-v1.1_test.tsv",
         # default="klue-dp-v1.1_dev.tsv",
-        # default="klue-nli-v1.1_dev.json",
-        # default="klue-nli-v1.1_train.json",
-        # default="test_data.csv",
-        default="train_data.csv",
+        # default="train_data.csv",
         # default="klue-dp-v1.1_dev_sample_10.tsv",
+        # default="klue-nli-v1_1_train.json",
+        default="klue-nli-v1_1_test.json",
+        # default="test_data.csv",
         type=str,
         help="Name of the test file (default: klue-dp-v1.1_test.tsv)",
     )
