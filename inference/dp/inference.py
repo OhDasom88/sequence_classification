@@ -247,7 +247,7 @@ if __name__ == "__main__":
         "--output_dir",
         type=str,
         # default=os.environ.get("SM_OUTPUT_DATA_DIR", "/output"),
-        default=f'{defaultDir}/inference/output/',
+        default=f'{defaultDir}/inference/dp/output/',
     )
 
     # inference arguments
@@ -265,9 +265,9 @@ if __name__ == "__main__":
         # default="klue-dp-v1.1_dev.tsv",
         # default="train_data.csv",
         # default="klue-dp-v1.1_dev_sample_10.tsv",
-        # default="klue-nli-v1_1_train.json",
-        default="klue-nli-v1_1_test.json",#1
-        # default="test_data.csv",
+        default="klue-nli-v1_1_train.json",
+        # default="klue-nli-v1_1_test.json",#1
+        # default="test_data.csv",#2
         type=str,
         help="Name of the test file (default: klue-dp-v1.1_test.tsv)",
     )

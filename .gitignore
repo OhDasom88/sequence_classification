@@ -137,7 +137,7 @@ data/MNLI/**
 data/KorNLI/**
 data/KorSTS/**
 data/*.json
-inference/output/*.json
+inference/*/output/*.json
 output/**
 model/**
 wandb/**
