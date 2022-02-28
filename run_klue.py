@@ -255,7 +255,7 @@ def main() -> None:
 
     if vars(args).get('model_name_or_path') is None:
         # sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
-        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-small']}})
+        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-large']}})
         sweep_configuration.update({"name": f"{sweep_configuration['parameters']['model_name_or_path']}_{dt.now().strftime('%m%d_%H:%M')}",})
 
     else:
@@ -271,7 +271,7 @@ def main() -> None:
             'file_name':{
                 'distribution': 'categorical'
                 , 'values':[
-                    {'DP':True,'filenames':('train_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv','test_from_klue_new_with_dp.csv')},
+                    {'DP':True,'filenames':('train_from_klue_new_with_dp_v2.csv','test_from_klue_new_with_dp_v2.csv','test_from_klue_new_with_dp_v2.csv')},
                     # {'DP':False,'filenames':('klue-nli-v1_1_train.json','klue-nli-v1_1_test.json','klue-nli-v1_1_test.json')},
                 ]
             }
