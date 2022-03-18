@@ -33,6 +33,12 @@ class KlueTask:
         tokenizer = AutoTokenizer.from_pretrained(
             args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
         )
+        
+        if args.file_name.get('DP'):
+            special_tokens_dict = {'additional_special_tokens': ['[word]']}
+            num_added_toks = tokenizer.add_special_tokens(special_tokens_dict)
+        # model.resize_token_embeddings(len(tokenizer))
+
         processor = self.processor_type(args, tokenizer)
         datamodule = self.processor_type.datamodule_type(args, processor)
 

@@ -13,8 +13,9 @@ from pytorch_lightning.loggers import CSVLogger, WandbLogger
 from klue_baseline import KLUE_TASKS
 from klue_baseline.utils import Command, LoggingCallback
 import wandb
-
 from datetime import datetime as dt
+import torch
+
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -42,8 +43,7 @@ def add_general_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse
     )
     parser.add_argument(
         "--gpus",
-        default=None,# 20220202
-        # default=[0],
+        default = [0] if torch.cuda.is_available() else None,
         nargs="+",
         type=int,
         help="Select specific GPU allocated for this, it is by default [] meaning none",
@@ -73,7 +73,8 @@ def add_general_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse
     parser.add_argument("--metric_key", type=str, default="accuracy", help="The name of monitoring metric")
     parser.add_argument(
         "--patience",
-        default=5,
+        # default=5,
+        default=10,# 20220221
         type=int,
         help="The number of validation epochs with no improvement after which training will be stopped.",
     )
@@ -113,9 +114,14 @@ def make_klue_trainer(
             dirpath=Path(args.output_dir).joinpath("checkpoint"),
             monitor=metric_key,
             filename="{epoch:02d}-{step}=" + filename_for_metric,
-            save_top_k=1,
-            mode="max",
+            save_top_k=2,
+            # mode="max",
+            mode="max" if metric_key == 'accuracy' else 'min',
         )
+    # Andrew Ng Proj >> Early Stopping
+    # what early stopping does is by stopping halfway you have only a mid-size rate w. 
+    # And so similar to L2 regularization by picking a neural network with smaller norm for your parameters w
+    # , hopefully your neural network is over fitting less.
     early_stopping_callback = EarlyStopping(monitor=metric_key, patience=args.patience, mode=args.early_stopping_mode)
     extra_callbacks.append(early_stopping_callback)
 
@@ -178,7 +184,8 @@ def my_train_func():
     trainer = make_klue_trainer(args)
     task.setup(args, command)
     
-    wandb.watch(task.model, criterion=None, log="all", log_freq=1000, idx=None, log_graph=(False))    
+    # wandb.watch(task.model, criterion=None, log="all", log_freq=1000, idx=None, log_graph=(False))    
+    wandb.watch(task.model, criterion=None, log="all", log_freq=500, idx=None, log_graph=(False))    
 
     if command == Command.Train:
         logger.info("Start to run the full optimization routine.")
@@ -236,37 +243,59 @@ def main() -> None:
 
     sweep_configuration = {
         "name": f"{args.model_name_or_path}_{dt.now().strftime('%m%d_%H:%M')}",
-        "metric": {"name": "valid/accuracy", "goal": "maximize"},
-        # "metric": {"name": "valid/loss", "goal": "minimize"},
+        # "metric": {"name": "valid/accuracy", "goal": "maximize"},
+        "metric": {"name": f"valid/{args.metric_key}", "goal": "minimize" if args.metric_key == 'loss' else 'maximize'},# args.metric_key
         # "method": "grid",
         "method": "bayes",
         "parameters": {},
         # 'early_terminate':{'type': 'hyperband' , 'max_iter': 27, 's': 2}
-        "early_terminate": {"type": "hyperband", "min_iter": 6,},
+        # "early_terminate": {"type": "hyperband", "min_iter": 3,},
     }
-
     sweep_configuration['parameters'] = {k:{'values': [v]} for k , v in vars(args).items() if k not in ['encoder_layerdrop', 'decoder_layerdrop', 'dropout','attention_dropout']}
+
     if vars(args).get('model_name_or_path') is None:
         # sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['kykim/electra-kor-base','klue/roberta-small', 'klue/roberta-base','klue/roberta-large']}})
-        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-small']}})
+        sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':['klue/roberta-large']}})
+        sweep_configuration.update({"name": f"{sweep_configuration['parameters']['model_name_or_path']}_{dt.now().strftime('%m%d_%H:%M')}",})
+
     else:
         sweep_configuration['parameters'].update({'model_name_or_path':{'distribution': 'categorical', 'values':[vars(args).get('model_name_or_path')]}})
 
-    sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#, False# GPU가 사용가능할때만
+    # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_data_new.csv']}})# ['word'] token 
+    # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['train_from_klue_new_with_dp.csv']}})# ['word'] token 
+    # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})# partial train data(2000) ['word'] token  
+    # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['test_from_klue_new_with_dp.csv']}})#
 
-    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[vars(args).get('gpus') is not None]}})#, False# GPU가 사용가능할때만
-    sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[True, False]}})
-    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
-    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.5}})
-    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
-    sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['cosine', 'cosine_w_restarts', 'linear', 'polynomial']}})
-    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    sweep_configuration['parameters'].update(
+        {
+            'file_name':{
+                'distribution': 'categorical'
+                , 'values':[
+                    {'DP':True,'filenames':('train_from_klue_new_with_dp_v2.csv','test_from_klue_new_with_dp_v2.csv','test_from_klue_new_with_dp_v2.csv')},
+                    # {'DP':False,'filenames':('klue-nli-v1_1_train.json','klue-nli-v1_1_test.json','klue-nli-v1_1_test.json')},
+                ]
+            }
+        }
+    )#
+    # sweep_configuration['parameters'].update({'train_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_train.json']}})#
+    # sweep_configuration['parameters'].update({'dev_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_dev.json']}})#
+    # sweep_configuration['parameters'].update({'test_file_name':{'distribution': 'categorical', 'values':['klue-nli-v1.1_test.json']}})#
+    sweep_configuration['parameters'].update({'fp16':{'distribution': 'categorical', 'values':[torch.cuda.is_available()]}})#, False# GPU가 사용가능할때만
+    # sweep_configuration['parameters'].update({'adafactor':{'distribution': 'categorical', 'values':[vars(args).get('adafactor')]}})# True, False
+    # sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'uniform', 'min':args.adam_epsilon/2, 'max':args.adam_epsilon*2}})
+    sweep_configuration['parameters'].update({'adam_epsilon':{'distribution': 'categorical', 'values':[args.adam_epsilon]}})# args.adam_epsilon, args.adam_epsilon*2 
+    # sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'uniform', 'min':0, 'max':0.2}})
+    sweep_configuration['parameters'].update({'weight_decay':{'distribution': 'categorical', 'values':[args.weight_decay]}})# args.weight_decay, 0.1
+    # sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'uniform', 'min':0, 'max':0.2}})  
+    sweep_configuration['parameters'].update({'warmup_ratio':{'distribution': 'categorical', 'values':[args.warmup_ratio]}})# args.warmup_ratio, args.warmup_ratio*2 
+    # sweep_configuration['parameters'].update({'lr_scheduler':{'distribution': 'categorical', 'values':['linear']}})# 'cosine', 'cosine_w_restarts', 'linear', 'polynomial'
+    # sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'uniform', 'min':args.learning_rate/2, 'max':args.learning_rate*2}})
+    sweep_configuration['parameters'].update({'learning_rate':{'distribution': 'categorical', 'values':[args.learning_rate]}})# args.learning_rate, args.learning_rate*2
 
     # batch size와 max_seq_length >> roberata large의 경우 GPU Memory 오류 발생 << 일정한 범위내로 제한 필요
-    sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
-    sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
+    # sweep_configuration['parameters'].update({'train_batch_size':{'distribution': 'int_uniform', 'min':args.train_batch_size/2, 'max':args.train_batch_size+1}})
+    # sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'int_uniform', 'min':args.max_seq_length/2, 'max':args.max_seq_length+1}})
+    # sweep_configuration['parameters'].update({'max_seq_length':{'distribution': 'categorical', 'values':[args.max_seq_length]}})
     
     # 일부 주석처리: 모델별로 값이 다르게 들어가야 해서 우선 pretrained 된 config 기본 값들이 학습시 전달되도록 수정
     # hidden_size (int, optional, defaults to 768)
@@ -284,13 +313,13 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'intermediate_size':{'distribution': 'constant', 'value':3072}})
     # hidden_act (str or Callable, optional, defaults to "gelu")
     #  — The non-linear activation function (function or string) in the encoder and pooler. If string, "gelu", "relu", "silu" and "gelu_new" are supported.
-    sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
+    # sweep_configuration['parameters'].update({'hidden_act': {'distribution': 'categorical', 'values': ["gelu", "gelu_new"]}})
     # hidden_dropout_prob (float, optional, defaults to 0.1)
     #  — The dropout probability for all fully connected layers in the embeddings, encoder, and pooler.
-    sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.3}})
+    # sweep_configuration['parameters'].update({'hidden_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.3}})
     # attention_probs_dropout_prob (float, optional, defaults to 0.1) 
     # — The dropout ratio for the attention probabilities.
-    sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # sweep_configuration['parameters'].update({'attention_probs_dropout_prob':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     # max_position_embeddings (int, optional, defaults to 512) 
     # — The maximum sequence length that this model might ever be used with. 
     # Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
@@ -300,10 +329,10 @@ def main() -> None:
     # sweep_configuration['parameters'].update({'type_vocab_size':{'distribution': 'constant', 'value':1}})# 이미 pretrained 된 가중치 값을 사용하기위해 기본값 그대로 사용해야 함
     # initializer_range (float, optional, defaults to 0.02)
     #  — The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
-    sweep_configuration['parameters'].update({'initializer_range':{'distribution': 'categorical', 'values':[0.02, 0.03, 0.01]}})
+    # sweep_configuration['parameters'].update({'initializer_range':{'distribution': 'categorical', 'values':[0.02, 0.03, 0.01]}})
     # layer_norm_eps (float, optional, defaults to 1e-12) 
     # — The epsilon used by the layer normalization layers.
-    sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
+    # sweep_configuration['parameters'].update({'layer_norm_eps':{'distribution': 'uniform', 'min':1e-12, 'max':1e-04}})
     # position_embedding_type (str, optional, defaults to "absolute")
     #  — Type of position embedding. Choose one of "absolute", "relative_key", "relative_key_query".
     #  For positional embeddings use "absolute".
@@ -311,7 +340,7 @@ def main() -> None:
     #  For more information on "relative_key_query", please refer to Method 4 in Improve Transformer Models with Better Relative Position Embeddings (Huang et al.).
     # sweep_configuration['parameters'].update({'position_embedding_type':{'distribution': 'categorical', 'values':['absolute']}})
     # classifier_dropout (float, optional) — The dropout ratio for the classification head.
-    sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
+    # sweep_configuration['parameters'].update({'classifier_dropout':{'distribution': 'uniform', 'min':0, 'max':0.5}})
     
     # wandb.config.update(args) # adds all of the arguments as config variables
     sweep_id = wandb.sweep(sweep_configuration)

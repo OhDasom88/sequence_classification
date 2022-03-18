@@ -13,7 +13,7 @@ from dataloader import KlueNliDataLoader
 from transformers import (AutoConfig, AutoModelForSequenceClassification,
                           AutoTokenizer)
 
-KLUE_NLI_OUTPUT = "output.csv"
+KLUE_NLI_OUTPUT = "nli_output.csv"
 
 
 def load_model_and_type(model_dir, model_tar_file):
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         "--output_dir",
         type=str,
         # default=os.environ.get("SM_OUTPUT_DATA_DIR", "/output"),
-        default='/home/dasomoh88/KLUE-Baseline/inference',
+        default='/home/dasomoh88/KLUE-Baseline/inference/output',
     )
     parser.add_argument(
         "--max_length",

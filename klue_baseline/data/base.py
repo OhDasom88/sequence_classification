@@ -112,12 +112,16 @@ class KlueDataModule(pl.LightningDataModule):
 
         logger.info("Creating features from dataset file at %s", self.hparams.data_dir)
 
+        filenames = self.hparams.file_name.get('filenames')
         if dataset_type == "train":
-            dataset = self.processor.get_train_dataset(self.hparams.data_dir, self.hparams.train_file_name)
+            # dataset = self.processor.get_train_dataset(self.hparams.data_dir, self.hparams.train_file_name)
+            dataset = self.processor.get_train_dataset(self.hparams.data_dir, filenames[0])
         elif dataset_type == "dev":
-            dataset = self.processor.get_dev_dataset(self.hparams.data_dir, self.hparams.dev_file_name)
+            # dataset = self.processor.get_dev_dataset(self.hparams.data_dir, self.hparams.dev_file_name)
+            dataset = self.processor.get_dev_dataset(self.hparams.data_dir, filenames[1])
         elif dataset_type == "test":
-            dataset = self.processor.get_test_dataset(self.hparams.data_dir, self.hparams.test_file_name)
+            # dataset = self.processor.get_test_dataset(self.hparams.data_dir, self.hparams.test_file_name)
+            dataset = self.processor.get_test_dataset(self.hparams.data_dir, filenames[2])
         else:
             raise ValueError(f"{dataset_type} do not support. [train|dev|test]")
         logger.info(f"Prepare {dataset_type} dataset (Count: {len(dataset)}) ")
@@ -147,7 +151,8 @@ class KlueDataModule(pl.LightningDataModule):
     def add_specific_args(parser: argparse.ArgumentParser, root_dir: str) -> argparse.ArgumentParser:
         # parser.add_argument("--data_dir", default=None, type=str, help="The input data dir", required=True)
         # parser.add_argument("--data_dir", default='data/klue', type=str, help="The input data dir")
-        parser.add_argument("--data_dir", default='/klue', type=str, help="The input data dir")
+        # parser.add_argument("--data_dir", default='/klue', type=str, help="The input data dir")
+        parser.add_argument("--data_dir", default='/dacon', type=str, help="The input data dir")
         parser.add_argument(
             "--train_file_name",
             default=None,
